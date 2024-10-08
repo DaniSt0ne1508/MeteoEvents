@@ -21,9 +21,11 @@ fun MainScreen(userType: String, onLogout: () -> Unit) {
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.Start
+            horizontalArrangement = Arrangement.End
         ) {
             Button(
+                modifier = Modifier
+                    .padding(16.dp),
                 onClick = onLogout,
                 colors = ButtonDefaults.buttonColors(Color.Red)
             ) {
@@ -33,27 +35,27 @@ fun MainScreen(userType: String, onLogout: () -> Unit) {
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        Text("Bienvenido, $userType")
+        Text("Benvingut, $userType")
         Spacer(modifier = Modifier.height(16.dp))
 
         if (userType == "Admin") {
             Text("Puedes realizar las siguientes acciones:")
             Spacer(modifier = Modifier.height(8.dp))
-            Button(onClick = { /* Crear evento */ }) { Text("Crear Evento") }
+            Button(onClick = { /* Crear esdeveniment */ }) { Text("Crear Esdeveniment") }
             Spacer(modifier = Modifier.height(8.dp))
-            Button(onClick = { /* Modificar evento */ }) { Text("Modificar Evento") }
+            Button(onClick = { /* Modificar esdeveniment */ }) { Text("Modificar Esdeveniment") }
             Spacer(modifier = Modifier.height(8.dp))
-            Button(onClick = { /* Eliminar evento */ }) { Text("Eliminar Evento") }
+            Button(onClick = { /* Eliminar esdeveniment */ }) { Text("Eliminar Esdeveniment") }
             Spacer(modifier = Modifier.height(8.dp))
-            Button(onClick = { /* Ver eventos */ }) { Text("Ver Eventos") }
+            Button(onClick = { /* Veure esdeveniment */ }) { Text("Veure Esdeveniment") }
             Spacer(modifier = Modifier.height(8.dp))
-            Button(onClick = { /* Gestionar usuarios */ }) { Text("Gestión de Usuarios") }
+            Button(onClick = { /* Gestió d'usuari */ }) { Text("Gestió d'Usuari") }
         } else {
             Text("Puedes realizar las siguientes acciones:")
             Spacer(modifier = Modifier.height(8.dp))
-            Button(onClick = { /* Ver eventos */ }) { Text("Ver Eventos") }
+            Button(onClick = { /* Veure esdeveniment */ }) { Text("Veure Esdeveniment") }
             Spacer(modifier = Modifier.height(8.dp))
-            Button(onClick = { /* Ver perfil */ }) { Text("Ver Perfil") }
+            Button(onClick = { /* Veure perfil */ }) { Text("Veure Perfil") }
         }
     }
 }
