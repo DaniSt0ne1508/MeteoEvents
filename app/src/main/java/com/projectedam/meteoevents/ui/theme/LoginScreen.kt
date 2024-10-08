@@ -2,6 +2,8 @@ package com.projectedam.meteoevents.ui.theme
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.text.input.InputTransformation.Companion.keyboardOptions
 import androidx.compose.material3.Button
 import androidx.compose.material3.Snackbar
 import androidx.compose.material3.SnackbarHost
@@ -12,8 +14,12 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.projectedam.meteoevents.R
 
 @Composable
 fun LoginScreen(onLoginSuccess: (String) -> Unit) {
@@ -29,13 +35,13 @@ fun LoginScreen(onLoginSuccess: (String) -> Unit) {
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-//        Image(
-//            painter = painterResource(id = R.drawable.ic_logo),
-//            contentDescription = "Logo",
-//            modifier = Modifier.size(120.dp)
-//        )
+        Image(
+            painter = painterResource(id = R.drawable.logo),
+            contentDescription = "Logo",
+            modifier = Modifier.size(300.dp)
+        )
 
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(8.dp))
         Text(text = "Benvingut a MeteoEvents", style = androidx.compose.material3.MaterialTheme.typography.headlineMedium)
 
         Spacer(modifier = Modifier.height(24.dp))
@@ -48,7 +54,12 @@ fun LoginScreen(onLoginSuccess: (String) -> Unit) {
         TextField(
             value = password,
             onValueChange = { password = it },
-            label = { Text("Contrasenya") }
+            label = { Text("Contrasenya")},
+            visualTransformation = PasswordVisualTransformation(),
+            keyboardOptions = KeyboardOptions(
+                keyboardType = KeyboardType.Password,
+                imeAction = ImeAction.Done
+            )
         )
         Spacer(modifier = Modifier.height(16.dp))
         Button(onClick = {
@@ -72,7 +83,7 @@ fun LoginScreen(onLoginSuccess: (String) -> Unit) {
 
     Box(
         modifier = Modifier.fillMaxSize()
-        .padding(vertical = 180.dp),
+        .padding(vertical = 56.dp),
         contentAlignment = Alignment.BottomCenter
     ) {
         SnackbarHost(

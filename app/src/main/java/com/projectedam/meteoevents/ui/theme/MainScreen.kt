@@ -1,5 +1,6 @@
 package com.projectedam.meteoevents.ui.theme
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -8,8 +9,10 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.projectedam.meteoevents.R
 
 @Composable
 fun MainScreen(userType: String, onLogout: () -> Unit) {
@@ -32,14 +35,17 @@ fun MainScreen(userType: String, onLogout: () -> Unit) {
                 Text("Logout", color = Color.White)
             }
         }
-
-        Spacer(modifier = Modifier.height(24.dp))
+        Image(
+            painter = painterResource(id = R.drawable.logo),
+            contentDescription = "Logo",
+            modifier = Modifier.size(240.dp)
+        )
 
         Text("Benvingut, $userType")
         Spacer(modifier = Modifier.height(16.dp))
 
         if (userType == "Admin") {
-            Text("Puedes realizar las siguientes acciones:")
+            Text("Pots realitzar les següents accions:")
             Spacer(modifier = Modifier.height(8.dp))
             Button(onClick = { /* Crear esdeveniment */ }) { Text("Crear Esdeveniment") }
             Spacer(modifier = Modifier.height(8.dp))
@@ -47,13 +53,13 @@ fun MainScreen(userType: String, onLogout: () -> Unit) {
             Spacer(modifier = Modifier.height(8.dp))
             Button(onClick = { /* Eliminar esdeveniment */ }) { Text("Eliminar Esdeveniment") }
             Spacer(modifier = Modifier.height(8.dp))
-            Button(onClick = { /* Veure esdeveniment */ }) { Text("Veure Esdeveniment") }
+            Button(onClick = { /* Veure esdeveniment */ }) { Text("Veure Esdeveniments") }
             Spacer(modifier = Modifier.height(8.dp))
             Button(onClick = { /* Gestió d'usuari */ }) { Text("Gestió d'Usuari") }
         } else {
-            Text("Puedes realizar las siguientes acciones:")
+            Text("Pots realitzar les següents accions:")
             Spacer(modifier = Modifier.height(8.dp))
-            Button(onClick = { /* Veure esdeveniment */ }) { Text("Veure Esdeveniment") }
+            Button(onClick = { /* Veure esdeveniment */ }) { Text("Veure Esdeveniments") }
             Spacer(modifier = Modifier.height(8.dp))
             Button(onClick = { /* Veure perfil */ }) { Text("Veure Perfil") }
         }
