@@ -1,4 +1,4 @@
-package com.projectedam.meteoevents.ui.theme
+package com.projectedam.meteoevents.ui.screens
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
@@ -15,7 +15,7 @@ import androidx.compose.ui.unit.dp
 import com.projectedam.meteoevents.R
 
 @Composable
-fun MainScreen(userType: String, onLogout: () -> Unit) {
+fun MainScreen(token: String, funcionalId: String, onLogout: () -> Unit) {
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -27,8 +27,7 @@ fun MainScreen(userType: String, onLogout: () -> Unit) {
             horizontalArrangement = Arrangement.End
         ) {
             Button(
-                modifier = Modifier
-                    .padding(16.dp),
+                modifier = Modifier.padding(16.dp),
                 onClick = onLogout,
                 colors = ButtonDefaults.buttonColors(Color.Red)
             ) {
@@ -41,10 +40,11 @@ fun MainScreen(userType: String, onLogout: () -> Unit) {
             modifier = Modifier.size(240.dp)
         )
 
-        Text("Benvingut, $userType")
+        Text("Benvingut") // Mensaje sin userType
         Spacer(modifier = Modifier.height(16.dp))
 
-        if (userType == "Admin") {
+        // Acciones dependiendo del funcionalId
+        if (funcionalId == "ADM") {
             Text("Pots realitzar les següents accions:")
             Spacer(modifier = Modifier.height(8.dp))
             Button(onClick = { /* Crear esdeveniment */ }) { Text("Crear Esdeveniment") }
@@ -69,5 +69,5 @@ fun MainScreen(userType: String, onLogout: () -> Unit) {
 @Preview(showBackground = true)
 @Composable
 fun PreviewMainScreen() {
-    MainScreen(userType = "Admin", onLogout = {})
+    MainScreen(token = "someToken", funcionalId = "user", onLogout = {})
 }
