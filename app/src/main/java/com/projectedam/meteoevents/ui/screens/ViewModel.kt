@@ -23,7 +23,7 @@ class UserViewModel : ViewModel() {
                     onSuccess(loginResponse.token, loginResponse.funcionalId)
                 } else {
                     val errorBody = response.errorBody()?.string()
-                    onFailure("Login fallit. Error: $errorBody")
+                    onFailure("Login fallit.")
                 }
             } catch (e: IOException) {
                 onFailure("Error de connexió. Siusplau, comprova la teva connexió al servidor.")

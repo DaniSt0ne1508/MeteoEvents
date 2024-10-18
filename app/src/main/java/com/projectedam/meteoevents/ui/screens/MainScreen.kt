@@ -40,10 +40,9 @@ fun MainScreen(token: String, funcionalId: String, onLogout: () -> Unit) {
             modifier = Modifier.size(240.dp)
         )
 
-        Text("Benvingut") // Mensaje sin userType
+        Text("Benvingut")
         Spacer(modifier = Modifier.height(16.dp))
 
-        // Acciones dependiendo del funcionalId
         if (funcionalId == "ADM") {
             Text("Pots realitzar les següents accions:")
             Spacer(modifier = Modifier.height(8.dp))

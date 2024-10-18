@@ -85,7 +85,7 @@ fun LoginScreen(viewModel: UserViewModel, onLoginSuccess: (String, String) -> Un
             },
             enabled = !isLoading
         ) {
-            Text(if (isLoading) "Cargando..." else "Login")
+            Text(if (isLoading) "Loading..." else "Login")
         }
 
         errorMessage?.let { message ->
