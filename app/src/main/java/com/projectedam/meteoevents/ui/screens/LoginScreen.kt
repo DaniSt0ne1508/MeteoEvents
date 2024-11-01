@@ -20,6 +20,12 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import com.projectedam.meteoevents.R
 
+/**
+ * Funció composable que representa la pantalla de login.
+ *
+ * @param viewModel Model de dades que gestiona l'estat d'usuari.
+ * @param onLoginSuccess Funció que s'executa quan l'usuari inicia sessió amb èxit.
+ */
 @Composable
 fun LoginScreen(viewModel: UserViewModel, onLoginSuccess: (String, String) -> Unit) {
     var username by remember { mutableStateOf("") }
@@ -85,7 +91,7 @@ fun LoginScreen(viewModel: UserViewModel, onLoginSuccess: (String, String) -> Un
             },
             enabled = !isLoading
         ) {
-            Text(if (isLoading) "Loading..." else "Login")
+            Text(if (isLoading) "Carregant..." else "Login")
         }
 
         errorMessage?.let { message ->
@@ -99,7 +105,7 @@ fun LoginScreen(viewModel: UserViewModel, onLoginSuccess: (String, String) -> Un
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .padding(vertical = 56.dp),
+            .padding(vertical = 30.dp),
         contentAlignment = Alignment.BottomCenter
     ) {
         SnackbarHost(
