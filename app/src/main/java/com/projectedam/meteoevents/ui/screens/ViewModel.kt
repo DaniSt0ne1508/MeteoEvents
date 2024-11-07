@@ -35,7 +35,7 @@ class UserViewModel(apiService: ApiService) : ViewModel() {
                     funcionalId = loginResponse.funcionalId
                     onSuccess(loginResponse.token, loginResponse.funcionalId)
                 } else {
-                    onFailure("Login fallit.")
+                    onFailure("Login fallit. Codi de resposta: ${response.code()}")
                 }
             } catch (e: IOException) {
                 onFailure("Error de connexió. Siusplau, comprova la teva connexió al servidor.")
@@ -62,7 +62,7 @@ class UserViewModel(apiService: ApiService) : ViewModel() {
                         funcionalId = null
                         onSuccess()
                     } else {
-                        onFailure("Logout fallit.")
+                        onFailure("Logout fallit. Codi de resposta: ${response.code()}")
                     }
                 } catch (e: IOException) {
                     onFailure("Error de connexió. Siusplau, comprova la teva connexió al servidor.")
@@ -89,7 +89,7 @@ class UserViewModel(apiService: ApiService) : ViewModel() {
                     if (response.isSuccessful && response.body() != null) {
                         onSuccess(response.body()!!)
                     } else {
-                        onFailure("No s'ha pogut obtenir la llista d'usuaris.")
+                        onFailure("No s'ha pogut obtenir la llista d'usuaris. Codi de resposta: ${response.code()}")
                     }
                 } catch (e: IOException) {
                     onFailure("Error de connexió. Siusplau, comprova la teva connexió al servidor.")
@@ -117,20 +117,12 @@ class UserViewModel(apiService: ApiService) : ViewModel() {
                     val response = ApiClient.apiService.updateUser(
                         authToken = "Bearer $currentToken",
                         userId = user.id,
-                        nomC = user.nomC,
-                        nomUsuari = user.nomUsuari,
-                        contrasenya = user.contrasenya,
-                        dataNaixement = user.dataNaixement,
-                        sexe = user.sexe,
-                        poblacio = user.poblacio,
-                        email = user.email,
-                        telefon = user.telefon,
-                        descripcio = user.descripcio
+                        user = user  // Pasar el objeto user directamente
                     )
                     if (response.isSuccessful) {
                         onSuccess()
                     } else {
-                        onFailure("No s'ha pogut actualitzar l'usuari.")
+                        onFailure("No s'ha pogut actualitzar l'usuari. Codi de resposta: ${response.code()}")
                     }
                 } catch (e: IOException) {
                     onFailure("Error de connexió. Siusplau, comprova la teva connexió al servidor.")
@@ -143,7 +135,7 @@ class UserViewModel(apiService: ApiService) : ViewModel() {
         }
     }
 
-    /**
+        /**
      * Mètode per eliminar un usuari.
      *
      * @param userId ID de l'usuari a eliminar.
@@ -159,7 +151,7 @@ class UserViewModel(apiService: ApiService) : ViewModel() {
                     if (response.isSuccessful) {
                         onSuccess()
                     } else {
-                        onFailure("No s'ha pogut eliminar l'usuari.")
+                        onFailure("No s'ha pogut eliminar l'usuari. Codi de resposta: ${response.code()}")
                     }
                 } catch (e: IOException) {
                     onFailure("Error de connexió. Siusplau, comprova la teva connexió al servidor.")
@@ -169,6 +161,31 @@ class UserViewModel(apiService: ApiService) : ViewModel() {
             }
         } else {
             onFailure("Token no vàlid, no es pot eliminar l'usuari.")
+        }
+    }
+
+    fun createUser(user: User, onSuccess: () -> Unit, onFailure: (String) -> Unit) {
+        val currentToken = token
+        if (currentToken != null) {
+            viewModelScope.launch {
+                try {
+                    val response = ApiClient.apiService.createUser(
+                        authToken = "Bearer $currentToken",
+                        user = user
+                    )
+                    if (response.isSuccessful) {
+                        onSuccess()
+                    } else {
+                        onFailure("No s'ha pogut crear l'usuari. Codi de resposta: ${response.code()}")
+                    }
+                } catch (e: IOException) {
+                    onFailure("Error de connexió. Siusplau, comprova la teva connexió al servidor.")
+                } catch (e: HttpException) {
+                    onFailure("Error al servidor. Siusplau, intenta-ho més tard.")
+                }
+            }
+        } else {
+            onFailure("Token no vàlid, no es pot crear l'usuari.")
         }
     }
 }

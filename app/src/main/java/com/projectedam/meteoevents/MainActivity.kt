@@ -76,7 +76,10 @@ class MainActivity : ComponentActivity() {
                 )
             }
             composable("user_management") {
-                UserManagementScreen(userViewModel = viewModel)
+                UserManagementScreen(
+                    userViewModel = viewModel,
+                    onNavigateBack = { navController.popBackStack() }
+                )
             }
         }
     }

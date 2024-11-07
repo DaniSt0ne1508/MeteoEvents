@@ -1,9 +1,11 @@
 package com.projectedam.meteoevents.network
 
+import com.google.gson.annotations.SerializedName
 import retrofit2.http.POST
 import retrofit2.Response
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
+import retrofit2.http.Body
 import retrofit2.http.DELETE
 import retrofit2.http.Field
 import retrofit2.http.FormUrlEncoded
@@ -39,12 +41,10 @@ data class LogoutResponse(
  * Data class que representa la informació completa d'un usuari.
  *
  * @param id Identificador de l'usuari.
- * @param funcional Objecte amb informació funcional de l'usuari.
  * @param nomC Nom complet de l'usuari.
  * @param funcionalId ID funcional de l'usuari.
  * @param nomUsuari Nom d'usuari.
  * @param contrasenya Contrasenya de l'usuari.
- * @param ultimaConexio Data de l'última connexió de l'usuari.
  * @param dataNaixement Data de naixement de l'usuari.
  * @param sexe Sexe de l'usuari.
  * @param poblacio Població de l'usuari.
@@ -54,29 +54,18 @@ data class LogoutResponse(
  */
 data class User(
     val id: String,
-    val funcional: Funcional,
-    val nomC: String,
-    val funcionalId: String,
+    @SerializedName("nom_c") val nomC: String,
     val nomUsuari: String,
     val contrasenya: String,
-    val ultimaConexio: String,
-    val dataNaixement: String,
+    val dataNaixement: String?,
     val sexe: String,
     val poblacio: String,
     val email: String,
-    val telefon: String,
-    val descripcio: String
-)
-
-/**
- * Data class que representa l'objecte Funcional amb informació funcional de l'usuari.
- *
- * @param id ID funcional de l'usuari.
- * @param nom Nom funcional.
- */
-data class Funcional(
-    val id: String,
-    val nom: String
+    val telefon: String?,
+    val descripcio: String,
+    @SerializedName("funcional_id")val funcionalId: String,
+    val username: String,
+    val password: String
 )
 
 
@@ -137,20 +126,12 @@ interface ApiService {
      * @param descripcio Nova descripció.
      * @return Resposta de la sol·licitud d'actualització.
      */
-    @FormUrlEncoded
+
     @PUT("api/usuaris/{userId}")
     suspend fun updateUser(
         @Header("Authorization") authToken: String,
         @Path("userId") userId: String,
-        @Field("nomC") nomC: String,
-        @Field("nomUsuari") nomUsuari: String,
-        @Field("contrasenya") contrasenya: String,
-        @Field("dataNaixement") dataNaixement: String,
-        @Field("sexe") sexe: String,
-        @Field("poblacio") poblacio: String,
-        @Field("email") email: String,
-        @Field("telefon") telefon: String,
-        @Field("descripcio") descripcio: String
+        @Body user: User
     ): Response<Unit>
 
     /**
@@ -164,6 +145,12 @@ interface ApiService {
     suspend fun deleteUser(
         @Header("Authorization") authToken: String,
         @Path("userId") userId: String
+    ): Response<Unit>
+
+    @POST("api/usuaris")
+    suspend fun createUser(
+        @Header("Authorization") authToken: String,
+        @Body user: User
     ): Response<Unit>
 }
 

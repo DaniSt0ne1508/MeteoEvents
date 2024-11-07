@@ -82,7 +82,7 @@ fun MainScreen(funcionalId: String, viewModel: UserViewModel, onLogout: () -> Un
             Spacer(modifier = Modifier.height(8.dp))
             Button(onClick = { /* Veure esdeveniment */ }) { Text("Veure Esdeveniments") }
             Spacer(modifier = Modifier.height(8.dp))
-            Button(onClick = { /* Gestió d'usuari */ }) { Text("Gestió d'Usuari") }
+            Button(onClick =  onUserManagement ) { Text("Gestió d'Usuari") }
         } else {
             Text("Pots realitzar les següents accions:")
             Spacer(modifier = Modifier.height(8.dp))
