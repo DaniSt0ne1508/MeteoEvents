@@ -33,12 +33,13 @@ fun UserManagementScreen(
     val isEditDialogOpen = remember { mutableStateOf(false) }
     val isCreateDialogOpen = remember { mutableStateOf(false) }
     val userToEdit = remember { mutableStateOf<User?>(null) }
+    val isAdmin = userViewModel.funcionalId == "ADM"
 
     LaunchedEffect(Unit) {
         isLoading.value = true
         userViewModel.seeUsers(
             onSuccess = { users ->
-                userList.value = users
+                userList.value = if (isAdmin) users else users.filter { it.nomUsuari == userViewModel.currentUserName }
                 isLoading.value = false
             },
             onFailure = { error ->
@@ -63,11 +64,13 @@ fun UserManagementScreen(
 
         Text("Gestió d'usuaris", style = MaterialTheme.typography.bodyLarge, modifier = Modifier.padding(bottom = 16.dp))
 
-        Button(
-            onClick = { isCreateDialogOpen.value = true },
-            modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp)
-        ) {
-            Text("Crear Usuari")
+        if (isAdmin) {
+            Button(
+                onClick = { isCreateDialogOpen.value = true },
+                modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp)
+            ) {
+                Text("Crear Usuari")
+            }
         }
 
         if (isLoading.value) {
@@ -83,6 +86,7 @@ fun UserManagementScreen(
                 items(userList.value) { user ->
                     UserItem(
                         user = user,
+                        isAdmin = isAdmin,
                         onEditClick = {
                             userToEdit.value = user
                             isEditDialogOpen.value = true
@@ -104,6 +108,7 @@ fun UserManagementScreen(
     if (isCreateDialogOpen.value) {
         EditUserDialog(
             user = User(id = "", nomC = "", nomUsuari = "", contrasenya = "", dataNaixement = "", sexe = "", poblacio = "", email = "", telefon = "", descripcio = "", funcionalId = "", username = "", password = ""),
+            isAdmin = isAdmin,
             onDismiss = { isCreateDialogOpen.value = false }
         ) { newUser ->
             userViewModel.createUser(
@@ -123,6 +128,7 @@ fun UserManagementScreen(
     if (isEditDialogOpen.value && userToEdit.value != null) {
         EditUserDialog(
             user = userToEdit.value!!,
+            isAdmin = isAdmin,
             onDismiss = { isEditDialogOpen.value = false }
         ) { updatedUser ->
             userViewModel.updateUser(
@@ -141,7 +147,7 @@ fun UserManagementScreen(
 }
 
 @Composable
-fun UserItem(user: User, onEditClick: () -> Unit, onDeleteClick: () -> Unit) {
+fun UserItem(user: User, onEditClick: () -> Unit, onDeleteClick: () -> Unit, isAdmin: Boolean) {
     Card(modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
         Column(modifier = Modifier.padding(16.dp)) {
             Text("Nom: ${user.nomC}", fontWeight = FontWeight.Bold)
@@ -156,8 +162,13 @@ fun UserItem(user: User, onEditClick: () -> Unit, onDeleteClick: () -> Unit) {
                 Button(onClick = onEditClick) {
                     Text("Edita")
                 }
-                Button(onClick = onDeleteClick, colors = ButtonDefaults.buttonColors(MaterialTheme.colorScheme.error)) {
-                    Text("Elimina")
+                if (isAdmin) {
+                    Button(
+                        onClick = onDeleteClick,
+                        colors = ButtonDefaults.buttonColors(MaterialTheme.colorScheme.error)
+                    ) {
+                        Text("Elimina")
+                    }
                 }
             }
         }
@@ -165,7 +176,7 @@ fun UserItem(user: User, onEditClick: () -> Unit, onDeleteClick: () -> Unit) {
 }
 
 @Composable
-fun EditUserDialog(user: User, onDismiss: () -> Unit, onSave: (User) -> Unit) {
+fun EditUserDialog(user: User, isAdmin: Boolean, onDismiss: () -> Unit, onSave: (User) -> Unit) {
     var nomC by remember { mutableStateOf(TextFieldValue(user.nomC ?: "")) }
     var nomUsuari by remember { mutableStateOf(TextFieldValue(user.nomUsuari ?: "")) }
     var funcionalId by remember { mutableStateOf(TextFieldValue(user.funcionalId ?: "")) }
@@ -186,9 +197,18 @@ fun EditUserDialog(user: User, onDismiss: () -> Unit, onSave: (User) -> Unit) {
                 .verticalScroll(rememberScrollState())
                 .padding(8.dp)
             ){
+                if (isAdmin) {
+                    OutlinedTextField(value = funcionalId, onValueChange = { funcionalId = it }, label = { Text("Funcional ID") })
+                } else {
+                    OutlinedTextField(
+                        value = funcionalId,
+                        onValueChange = {},
+                        label = { Text("Funcional ID") },
+                        enabled = false
+                    )
+                }
                 OutlinedTextField(value = nomC, onValueChange = { nomC = it }, label = { Text("Nom complet") })
                 OutlinedTextField(value = nomUsuari, onValueChange = { nomUsuari = it }, label = { Text("Nom d'usuari") })
-                OutlinedTextField(value = funcionalId, onValueChange = { funcionalId = it }, label = { Text("Funcional ID") })
                 OutlinedTextField(value = contrasenya, onValueChange = { contrasenya = it }, label = { Text("Contrasenya") })
                 OutlinedTextField(value = dataNaixement, onValueChange = { dataNaixement = it }, label = { Text("Data Naixement (YYYY-MM-DD)") })
                 OutlinedTextField(value = sexe, onValueChange = { sexe = it }, label = { Text("Sexe") })

@@ -28,7 +28,7 @@ fun MainScreen(funcionalId: String, viewModel: UserViewModel, onLogout: () -> Un
     val snackbarHostState = remember { SnackbarHostState() }
     var showSnackbar by remember { mutableStateOf(false) }
     var snackbarMessage by remember { mutableStateOf("") }
-    var isLogoutSuccess by remember { mutableStateOf(false) } // Estat d'èxit o fallida
+    var isLogoutSuccess by remember { mutableStateOf(false) }
 
     Column(
         modifier = Modifier
@@ -74,13 +74,9 @@ fun MainScreen(funcionalId: String, viewModel: UserViewModel, onLogout: () -> Un
         if (funcionalId == "ADM") {
             Text("Pots realitzar les següents accions:")
             Spacer(modifier = Modifier.height(8.dp))
-            Button(onClick = { /* Crear esdeveniment */ }) { Text("Crear Esdeveniment") }
+            Button(onClick = { /* Crear esdeveniment */ }) { Text("Gestió Esdeveniment") }
             Spacer(modifier = Modifier.height(8.dp))
-            Button(onClick = { /* Modificar esdeveniment */ }) { Text("Modificar Esdeveniment") }
-            Spacer(modifier = Modifier.height(8.dp))
-            Button(onClick = { /* Eliminar esdeveniment */ }) { Text("Eliminar Esdeveniment") }
-            Spacer(modifier = Modifier.height(8.dp))
-            Button(onClick = { /* Veure esdeveniment */ }) { Text("Veure Esdeveniments") }
+            Button(onClick = { /* Modificar esdeveniment */ }) { Text("Gestió Mesures de Prevenció") }
             Spacer(modifier = Modifier.height(8.dp))
             Button(onClick =  onUserManagement ) { Text("Gestió d'Usuari") }
         } else {
@@ -88,7 +84,7 @@ fun MainScreen(funcionalId: String, viewModel: UserViewModel, onLogout: () -> Un
             Spacer(modifier = Modifier.height(8.dp))
             Button(onClick = { /* Veure esdeveniment */ }) { Text("Veure Esdeveniments") }
             Spacer(modifier = Modifier.height(8.dp))
-            Button(onClick = { /* Veure perfil */ }) { Text("Veure Perfil") }
+            Button(onClick =  onUserManagement ) { Text("Veure Perfil") }
         }
     }
 

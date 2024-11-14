@@ -15,7 +15,7 @@ import java.io.IOException
 class UserViewModel(apiService: ApiService) : ViewModel() {
     var token: String? = null
     var funcionalId: String? = null
-    var loginError: String? = null
+    var currentUserName: String? = null
 
     /**
      * Mètode per gestionar el login de l'usuari.
@@ -33,6 +33,7 @@ class UserViewModel(apiService: ApiService) : ViewModel() {
                     val loginResponse = response.body()!!
                     token = loginResponse.token
                     funcionalId = loginResponse.funcionalId
+                    currentUserName = username
                     onSuccess(loginResponse.token, loginResponse.funcionalId)
                 } else {
                     onFailure("Login fallit. Codi de resposta: ${response.code()}")
