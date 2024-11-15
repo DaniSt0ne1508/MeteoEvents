@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.projectedam.meteoevents.network.ApiClient
 import com.projectedam.meteoevents.network.ApiService
+import com.projectedam.meteoevents.network.Esdeveniment
 import com.projectedam.meteoevents.network.User
 import kotlinx.coroutines.launch
 import retrofit2.HttpException
@@ -189,4 +190,144 @@ class UserViewModel(apiService: ApiService) : ViewModel() {
             onFailure("Token no vàlid, no es pot crear l'usuari.")
         }
     }
+
+    fun seeEvents(onSuccess: (List<Esdeveniment>) -> Unit, onFailure: (String) -> Unit) {
+        val currentToken = token
+        if (currentToken != null) {
+            viewModelScope.launch {
+                try {
+                    val response = ApiClient.apiService.getEsdeveniments("Bearer $currentToken")
+                    if (response.isSuccessful && response.body() != null) {
+                        onSuccess(response.body()!!)
+                    } else {
+                        onFailure("No s'ha pogut obtenir el llistat d'esdeveniments. Codi de resposta: ${response.code()}")
+                    }
+                } catch (e: IOException) {
+                    onFailure("Error de connexió. Siusplau, comprova la teva connexió al servidor.")
+                } catch (e: HttpException) {
+                    onFailure("Error al servidor. Siusplau, intenta-ho més tard.")
+                }
+            }
+        } else {
+            onFailure("Token no vàlid, no es pot obtenir el llistat d'esdeveniments.")
+        }
+    }
+
+    /**
+     * Mètode per obtenir un esdeveniment per ID.
+     *
+     * @param id ID de l'esdeveniment.
+     * @param onSuccess Funció que s'executa quan la recuperació és exitosa.
+     * @param onFailure Funció que s'executa en cas d'error durant la recuperació.
+     */
+    fun getEventById(id: Int, onSuccess: (Esdeveniment) -> Unit, onFailure: (String) -> Unit) {
+        val currentToken = token
+        if (currentToken != null) {
+            viewModelScope.launch {
+                try {
+                    val response = ApiClient.apiService.getEsdeveniment("Bearer $currentToken", id)
+                    if (response.isSuccessful && response.body() != null) {
+                        onSuccess(response.body()!!)
+                    } else {
+                        onFailure("No s'ha pogut obtenir l'esdeveniment. Codi de resposta: ${response.code()}")
+                    }
+                } catch (e: IOException) {
+                    onFailure("Error de connexió. Siusplau, comprova la teva connexió al servidor.")
+                } catch (e: HttpException) {
+                    onFailure("Error al servidor. Siusplau, intenta-ho més tard.")
+                }
+            }
+        } else {
+            onFailure("Token no vàlid, no es pot obtenir l'esdeveniment.")
+        }
+    }
+
+    /**
+     * Mètode per crear un nou esdeveniment.
+     *
+     * @param esdeveniment Esdeveniment a crear.
+     * @param onSuccess Funció que s'executa quan la creació és exitosa.
+     * @param onFailure Funció que s'executa en cas d'error durant la creació.
+     */
+    fun createEvent(esdeveniment: Esdeveniment, onSuccess: () -> Unit, onFailure: (String) -> Unit) {
+        val currentToken = token
+        if (currentToken != null) {
+            viewModelScope.launch {
+                try {
+                    val response = ApiClient.apiService.createEsdeveniment("Bearer $currentToken", esdeveniment)
+                    if (response.isSuccessful) {
+                        onSuccess()
+                    } else {
+                        onFailure("No s'ha pogut crear l'esdeveniment. Codi de resposta: ${response.code()}")
+                    }
+                } catch (e: IOException) {
+                    onFailure("Error de connexió. Siusplau, comprova la teva connexió al servidor.")
+                } catch (e: HttpException) {
+                    onFailure("Error al servidor. Siusplau, intenta-ho més tard.")
+                }
+            }
+        } else {
+            onFailure("Token no vàlid, no es pot crear l'esdeveniment.")
+        }
+    }
+
+    /**
+     * Mètode per actualitzar un esdeveniment.
+     *
+     * @param id ID de l'esdeveniment a actualitzar.
+     * @param esdeveniment Esdeveniment amb les dades actualitzades.
+     * @param onSuccess Funció que s'executa quan l'actualització és exitosa.
+     * @param onFailure Funció que s'executa en cas d'error durant l'actualització.
+     */
+    fun updateEvent(id: Int, esdeveniment: Esdeveniment, onSuccess: () -> Unit, onFailure: (String) -> Unit) {
+        val currentToken = token
+        if (currentToken != null) {
+            viewModelScope.launch {
+                try {
+                    val response = ApiClient.apiService.updateEsdeveniment("Bearer $currentToken", id, esdeveniment)
+                    if (response.isSuccessful) {
+                        onSuccess()
+                    } else {
+                        onFailure("No s'ha pogut actualitzar l'esdeveniment. Codi de resposta: ${response.code()}")
+                    }
+                } catch (e: IOException) {
+                    onFailure("Error de connexió. Siusplau, comprova la teva connexió al servidor.")
+                } catch (e: HttpException) {
+                    onFailure("Error al servidor. Siusplau, intenta-ho més tard.")
+                }
+            }
+        } else {
+            onFailure("Token no vàlid, no es pot actualitzar l'esdeveniment.")
+        }
+    }
+
+    /**
+     * Mètode per eliminar un esdeveniment.
+     *
+     * @param id ID de l'esdeveniment a eliminar.
+     * @param onSuccess Funció que s'executa quan l'eliminació és exitosa.
+     * @param onFailure Funció que s'executa en cas d'error durant l'eliminació.
+     */
+    fun deleteEvent(id: Int, onSuccess: () -> Unit, onFailure: (String) -> Unit) {
+        val currentToken = token
+        if (currentToken != null) {
+            viewModelScope.launch {
+                try {
+                    val response = ApiClient.apiService.deleteEsdeveniment("Bearer $currentToken", id)
+                    if (response.isSuccessful) {
+                        onSuccess()
+                    } else {
+                        onFailure("No s'ha pogut eliminar l'esdeveniment. Codi de resposta: ${response.code()}")
+                    }
+                } catch (e: IOException) {
+                    onFailure("Error de connexió. Siusplau, comprova la teva connexió al servidor.")
+                } catch (e: HttpException) {
+                    onFailure("Error al servidor. Siusplau, intenta-ho més tard.")
+                }
+            }
+        } else {
+            onFailure("Token no vàlid, no es pot eliminar l'esdeveniment.")
+        }
+    }
 }
+

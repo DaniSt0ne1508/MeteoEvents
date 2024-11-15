@@ -9,6 +9,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.projectedam.meteoevents.network.ApiClient.apiService
+import com.projectedam.meteoevents.ui.screens.EsdevenimentsManagementScreen
 import com.projectedam.meteoevents.ui.screens.LoginScreen
 import com.projectedam.meteoevents.ui.screens.MainScreen
 import com.projectedam.meteoevents.ui.screens.UserManagementScreen
@@ -72,11 +73,20 @@ class MainActivity : ComponentActivity() {
                     },
                     onUserManagement = {
                         navController.navigate("user_management")
+                    },
+                    onEventManagement = {
+                        navController.navigate("event_management")
                     }
                 )
             }
             composable("user_management") {
                 UserManagementScreen(
+                    userViewModel = viewModel,
+                    onNavigateBack = { navController.popBackStack() }
+                )
+            }
+            composable("event_management") {
+                EsdevenimentsManagementScreen(
                     userViewModel = viewModel,
                     onNavigateBack = { navController.popBackStack() }
                 )

@@ -28,14 +28,6 @@ data class LoginResponse(
     val funcionalId: String
 )
 
-/**
- * Data class que representa la resposta del logout, de moment no es fa servir.
- *
- * @param message Missatge de confirmació.
- */
-data class LogoutResponse(
-    val message: String
-)
 
 /**
  * Data class que representa la informació completa d'un usuari.
@@ -66,6 +58,18 @@ data class User(
     @SerializedName("funcional_id")val funcionalId: String,
     val username: String,
     val password: String
+)
+
+data class Esdeveniment(
+    val id: Int? = null,
+    val nom: String,
+    val descripcio: String,
+    val organitzador: String,
+    val direccio: String,
+    val codiPostal: String,
+    val poblacio: String,
+    val aforament: String,
+    val horari: String
 )
 
 
@@ -109,6 +113,29 @@ interface ApiService {
         @Header("Authorization") authToken: String
     ): Response<List<User>>
 
+    /**
+     * Mètode per obtenir el llistat d'esdeveniments.
+     *
+     * @param authToken Token d'autenticació de l'usuari.
+     * @return Llistat d'esdeveniments.
+     */
+    @GET("api/esdeveniments")
+    suspend fun getEsdeveniments(
+        @Header("Authorization") authToken: String
+    ): Response<List<Esdeveniment>>
+
+    /**
+     * Mètode per obtenir un esdeveniment per ID.
+     *
+     * @param authToken Token d'autenticació de l'usuari.
+     * @param esdevenimentId ID de l'esdeveniment.
+     * @return Esdeveniment amb l'ID especificat.
+     */
+    @GET("api/esdeveniments/{esdevenimentId}")
+    suspend fun getEsdeveniment(
+        @Header("Authorization") authToken: String,
+        @Path("esdevenimentId") esdevenimentId: Int
+    ): Response<Esdeveniment>
 
     /**
      * Mètode per actualitzar la informació d'un usuari.
@@ -135,6 +162,21 @@ interface ApiService {
     ): Response<Unit>
 
     /**
+     * Mètode per actualitzar un esdeveniment existent.
+     *
+     * @param authToken Token d'autenticació de l'usuari.
+     * @param esdevenimentId ID de l'esdeveniment a actualitzar.
+     * @param esdeveniment Esdeveniment amb els canvis.
+     * @return Resposta de l'actualització.
+     */
+    @PUT("api/esdeveniments/{esdevenimentId}")
+    suspend fun updateEsdeveniment(
+        @Header("Authorization") authToken: String,
+        @Path("esdevenimentId") esdevenimentId: Int,
+        @Body esdeveniment: Esdeveniment
+    ): Response<Unit>
+
+    /**
      * Mètode per eliminar un usuari.
      *
      * @param authToken Token d'autenticació de l'usuari.
@@ -147,12 +189,39 @@ interface ApiService {
         @Path("userId") userId: String
     ): Response<Unit>
 
+    /**
+     * Mètode per eliminar un esdeveniment.
+     *
+     * @param authToken Token d'autenticació de l'usuari.
+     * @param esdevenimentId ID de l'esdeveniment a eliminar.
+     * @return Resposta de l'eliminació.
+     */
+    @DELETE("api/esdeveniments/{esdevenimentId}")
+    suspend fun deleteEsdeveniment(
+        @Header("Authorization") authToken: String,
+        @Path("esdevenimentId") esdevenimentId: Int
+    ): Response<Unit>
+
     @POST("api/usuaris")
     suspend fun createUser(
         @Header("Authorization") authToken: String,
         @Body user: User
     ): Response<Unit>
+
+    /**
+     * Mètode per crear un nou esdeveniment.
+     *
+     * @param authToken Token d'autenticació de l'usuari.
+     * @param esdeveniment Esdeveniment a crear.
+     * @return Resposta de la creació.
+     */
+    @POST("api/esdeveniments")
+    suspend fun createEsdeveniment(
+        @Header("Authorization") authToken: String,
+        @Body esdeveniment: Esdeveniment
+    ): Response<Unit>
 }
+
 
 
 

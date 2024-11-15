@@ -24,7 +24,13 @@ import kotlinx.coroutines.delay
  * @param onLogout Funció que s'executa quan l'usuari es desconnecta.
  */
 @Composable
-fun MainScreen(funcionalId: String, viewModel: UserViewModel, onLogout: () -> Unit, onUserManagement: () -> Unit ) {
+fun MainScreen(
+    funcionalId: String,
+    viewModel: UserViewModel,
+    onLogout: () -> Unit,
+    onUserManagement: () -> Unit,
+    onEventManagement: () -> Unit
+) {
     val snackbarHostState = remember { SnackbarHostState() }
     var showSnackbar by remember { mutableStateOf(false) }
     var snackbarMessage by remember { mutableStateOf("") }
@@ -74,7 +80,7 @@ fun MainScreen(funcionalId: String, viewModel: UserViewModel, onLogout: () -> Un
         if (funcionalId == "ADM") {
             Text("Pots realitzar les següents accions:")
             Spacer(modifier = Modifier.height(8.dp))
-            Button(onClick = { /* Crear esdeveniment */ }) { Text("Gestió Esdeveniment") }
+            Button(onClick =  onEventManagement) { Text("Gestió Esdeveniment") }
             Spacer(modifier = Modifier.height(8.dp))
             Button(onClick = { /* Modificar esdeveniment */ }) { Text("Gestió Mesures de Prevenció") }
             Spacer(modifier = Modifier.height(8.dp))
