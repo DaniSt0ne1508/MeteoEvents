@@ -22,6 +22,15 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.projectedam.meteoevents.network.User
 
+/**
+ * Pantalla de gestió d'usuaris.
+ *
+ * Aquesta pantalla permet als administradors gestionar usuaris (crear, editar i eliminar).
+ * Els usuaris no administradors poden veure i editar només la seva pròpia informació.
+ *
+ * @param userViewModel Instància del ViewModel per gestionar usuaris.
+ * @param onNavigateBack Funció per tornar a la pantalla anterior.
+ */
 @Composable
 fun UserManagementScreen(
     userViewModel: UserViewModel = viewModel(),
@@ -146,6 +155,14 @@ fun UserManagementScreen(
     }
 }
 
+/**
+ * Component per mostrar la informació d'un usuari amb opcions per editar o eliminar.
+ *
+ * @param user L'usuari que es mostra.
+ * @param onEditClick Funció que s'executa quan es prem el botó per editar.
+ * @param onDeleteClick Funció que s'executa quan es prem el botó per eliminar.
+ * @param isAdmin Indica si l'usuari actual és administrador.
+ */
 @Composable
 fun UserItem(user: User, onEditClick: () -> Unit, onDeleteClick: () -> Unit, isAdmin: Boolean) {
     Card(modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
@@ -175,6 +192,14 @@ fun UserItem(user: User, onEditClick: () -> Unit, onDeleteClick: () -> Unit, isA
     }
 }
 
+/**
+ * Diàleg per editar o crear un usuari.
+ *
+ * @param user L'usuari a editar o les dades inicials per a un nou usuari.
+ * @param isAdmin Indica si l'usuari actual és administrador.
+ * @param onDismiss Funció per tancar el diàleg sense desar.
+ * @param onSave Funció per desar els canvis realitzats a l'usuari.
+ */
 @Composable
 fun EditUserDialog(user: User, isAdmin: Boolean, onDismiss: () -> Unit, onSave: (User) -> Unit) {
     var nomC by remember { mutableStateOf(TextFieldValue(user.nomC ?: "")) }

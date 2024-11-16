@@ -60,6 +60,19 @@ data class User(
     val password: String
 )
 
+/**
+ * Data class que representa un esdeveniment.
+ *
+ * @param id Identificador de l'esdeveniment.
+ * @param nom Nom de l'esdeveniment.
+ * @param descripcio Descripció de l'esdeveniment.
+ * @param organitzador Nom de l'organitzador.
+ * @param direccio Direcció de l'esdeveniment.
+ * @param codiPostal Codi postal de l'esdeveniment.
+ * @param poblacio Població on se celebra l'esdeveniment.
+ * @param aforament Nombre màxim d'assistents.
+ * @param horari Horari de l'esdeveniment.
+ */
 data class Esdeveniment(
     val id: Int? = null,
     val nom: String,

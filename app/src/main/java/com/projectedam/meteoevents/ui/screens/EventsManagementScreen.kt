@@ -19,6 +19,14 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.projectedam.meteoevents.network.Esdeveniment
 
+/**
+ * Pantalla de gestió d'esdeveniments.
+ *
+ * Aquesta pantalla permet visualitzar, crear, editar i eliminar esdeveniments.
+ *
+ * @param userViewModel ViewModel que gestiona la lògica d'esdeveniments i usuaris.
+ * @param onNavigateBack Callback per tornar a la pantalla anterior.
+ */
 @Composable
 fun EsdevenimentsManagementScreen(
     userViewModel: UserViewModel = viewModel(),
@@ -169,6 +177,13 @@ fun EsdevenimentsManagementScreen(
     }
 }
 
+/**
+ * Representa un element d'esdeveniment dins d'una llista.
+ *
+ * @param esdeveniment L'esdeveniment a mostrar.
+ * @param onEditClick Callback per a editar l'esdeveniment.
+ * @param onDeleteClick Callback per a eliminar l'esdeveniment.
+ */
 @Composable
 fun EsdevenimentItem(esdeveniment: Esdeveniment, onEditClick: () -> Unit, onDeleteClick: () -> Unit) {
     Card(modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
@@ -195,6 +210,13 @@ fun EsdevenimentItem(esdeveniment: Esdeveniment, onEditClick: () -> Unit, onDele
     }
 }
 
+/**
+ * Diàleg per editar o crear un esdeveniment.
+ *
+ * @param esdeveniment L'esdeveniment a editar o base per a crear-ne un de nou.
+ * @param onDismiss Callback per tancar el diàleg sense guardar.
+ * @param onSave Callback per guardar els canvis de l'esdeveniment.
+ */
 @Composable
 fun EditEventDialog(
     esdeveniment: Esdeveniment,

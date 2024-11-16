@@ -57,6 +57,15 @@ class MainActivity : ComponentActivity() {
                     }
                 })
             }
+            /**
+             * Pantalla principal de l'aplicació.
+             *
+             * Aquesta pantalla mostra el menú principal i permet accedir a la gestió d'usuaris
+             * o esdeveniments, o tancar sessió.
+             *
+             * @param token Token d'autenticació de l'usuari.
+             * @param funcionalId Identificador funcional de l'usuari.
+             */
             composable("main/{token}/{funcionalId}") { backStackEntry ->
                 val token = backStackEntry.arguments?.getString("token") ?: ""
                 val funcionalId = backStackEntry.arguments?.getString("funcionalId") ?: ""
@@ -79,12 +88,22 @@ class MainActivity : ComponentActivity() {
                     }
                 )
             }
+            /**
+             * Pantalla de gestió d'usuaris.
+             *
+             * Aquesta pantalla permet administrar els usuaris de l'aplicació i tornar al menú principal.
+             */
             composable("user_management") {
                 UserManagementScreen(
                     userViewModel = viewModel,
                     onNavigateBack = { navController.popBackStack() }
                 )
             }
+            /**
+             * Pantalla de gestió d'esdeveniments.
+             *
+             * Aquesta pantalla permet administrar els esdeveniments de l'aplicació i tornar al menú principal.
+             */
             composable("event_management") {
                 EsdevenimentsManagementScreen(
                     userViewModel = viewModel,
