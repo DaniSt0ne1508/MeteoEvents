@@ -235,6 +235,12 @@ fun EsdevenimentItem(esdeveniment: Esdeveniment, onEditClick: () -> Unit, onDele
             Text("Descripció: ${esdeveniment.descripcio}")
             Text("Organitzador:: ${esdeveniment.organitzador}")
             Text("Lloc: ${esdeveniment.direccio}")
+            Button(
+                onClick = { onViewClick(esdeveniment.id!!) },
+                colors = ButtonDefaults.buttonColors(MaterialTheme.colorScheme.primary)
+            ) {
+                Text("Veure")
+            }
             if(isAdmin) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),

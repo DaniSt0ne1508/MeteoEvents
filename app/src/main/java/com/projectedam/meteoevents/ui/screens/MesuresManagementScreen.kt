@@ -229,6 +229,12 @@ fun MesuraSeguretatItem(mesura: Mesura, onEditClick: () -> Unit, onDeleteClick: 
             Text("Valor: ${mesura.valor}")
             Text("ValorUm: ${mesura.valorUm}")
             Text("Acció: ${mesura.accio}")
+            Button(
+                onClick = { onViewClick(mesura.id!!) },
+                colors = ButtonDefaults.buttonColors(MaterialTheme.colorScheme.primary)
+            ) {
+                Text("Veure")
+            }
             if (isAdmin) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -242,12 +248,6 @@ fun MesuraSeguretatItem(mesura: Mesura, onEditClick: () -> Unit, onDeleteClick: 
                         colors = ButtonDefaults.buttonColors(MaterialTheme.colorScheme.error)
                     ) {
                         Text("Elimina")
-                    }
-                    Button(
-                        onClick = { onViewClick(mesura.id!!) },
-                        colors = ButtonDefaults.buttonColors(MaterialTheme.colorScheme.primary)
-                    ) {
-                        Text("Veure")
                     }
                 }
             }
