@@ -12,6 +12,7 @@ import com.projectedam.meteoevents.network.ApiClient.apiService
 import com.projectedam.meteoevents.ui.screens.EsdevenimentsManagementScreen
 import com.projectedam.meteoevents.ui.screens.LoginScreen
 import com.projectedam.meteoevents.ui.screens.MainScreen
+import com.projectedam.meteoevents.ui.screens.MesuresSeguretatManagementScreen
 import com.projectedam.meteoevents.ui.screens.UserManagementScreen
 import com.projectedam.meteoevents.ui.screens.UserViewModel
 import com.projectedam.meteoevents.ui.theme.MeteoEventsTheme
@@ -85,6 +86,9 @@ class MainActivity : ComponentActivity() {
                     },
                     onEventManagement = {
                         navController.navigate("event_management")
+                    },
+                    onMesuresManagement = {
+                        navController.navigate("mesures_management")
                     }
                 )
             }
@@ -106,6 +110,17 @@ class MainActivity : ComponentActivity() {
              */
             composable("event_management") {
                 EsdevenimentsManagementScreen(
+                    userViewModel = viewModel,
+                    onNavigateBack = { navController.popBackStack() }
+                )
+            }
+            /**
+             * Pantalla de gestió de mesures de seguretat.
+             *
+             * Aquesta pantalla permet administrar les mesures de seguretat de l'aplicació i tornar al menú principal.
+             */
+            composable("mesures_management") {
+                MesuresSeguretatManagementScreen(
                     userViewModel = viewModel,
                     onNavigateBack = { navController.popBackStack() }
                 )

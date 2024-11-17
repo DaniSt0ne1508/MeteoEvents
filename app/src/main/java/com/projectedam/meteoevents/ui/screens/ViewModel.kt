@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.projectedam.meteoevents.network.ApiClient
 import com.projectedam.meteoevents.network.ApiService
 import com.projectedam.meteoevents.network.Esdeveniment
+import com.projectedam.meteoevents.network.Mesura
 import com.projectedam.meteoevents.network.User
 import kotlinx.coroutines.launch
 import retrofit2.HttpException
@@ -327,6 +328,151 @@ class UserViewModel(apiService: ApiService) : ViewModel() {
             }
         } else {
             onFailure("Token no vàlid, no es pot eliminar l'esdeveniment.")
+        }
+    }
+
+    /**
+     * Mètode per obtenir el llistat de mesures de seguretat.
+     *
+     * @param onSuccess Funció que s'executa quan la recuperació és exitosa.
+     * @param onFailure Funció que s'executa en cas d'error durant la recuperació.
+     */
+    fun seeMesures(onSuccess: (List<Mesura>) -> Unit, onFailure: (String) -> Unit) {
+        val currentToken = token
+        if (currentToken != null) {
+            viewModelScope.launch {
+                try {
+                    val response = ApiClient.apiService.getMesures("Bearer $currentToken")
+                    if (response.isSuccessful && response.body() != null) {
+                        onSuccess(response.body()!!)
+                    } else {
+                        onFailure("No s'ha pogut obtenir el llistat de mesures. Codi de resposta: ${response.code()}")
+                    }
+                } catch (e: IOException) {
+                    onFailure("Error de connexió. Siusplau, comprova la teva connexió al servidor.")
+                } catch (e: HttpException) {
+                    onFailure("Error al servidor. Siusplau, intenta-ho més tard.")
+                }
+            }
+        } else {
+            onFailure("Token no vàlid, no es pot obtenir el llistat de mesures.")
+        }
+    }
+
+    /**
+     * Mètode per obtenir una mesura de seguretat per ID.
+     *
+     * @param id ID de la mesura.
+     * @param onSuccess Funció que s'executa quan la recuperació és exitosa.
+     * @param onFailure Funció que s'executa en cas d'error durant la recuperació.
+     */
+    fun getMesuraById(id: Int, onSuccess: (Mesura) -> Unit, onFailure: (String) -> Unit) {
+        val currentToken = token
+        if (currentToken != null) {
+            viewModelScope.launch {
+                try {
+                    val response = ApiClient.apiService.getMesura("Bearer $currentToken", id)
+                    if (response.isSuccessful && response.body() != null) {
+                        onSuccess(response.body()!!)
+                    } else {
+                        onFailure("No s'ha pogut obtenir la mesura. Codi de resposta: ${response.code()}")
+                    }
+                } catch (e: IOException) {
+                    onFailure("Error de connexió. Siusplau, comprova la teva connexió al servidor.")
+                } catch (e: HttpException) {
+                    onFailure("Error al servidor. Siusplau, intenta-ho més tard.")
+                }
+            }
+        } else {
+            onFailure("Token no vàlid, no es pot obtenir la mesura.")
+        }
+    }
+
+    /**
+     * Mètode per crear una nova mesura de seguretat.
+     *
+     * @param mesura Mesura a crear.
+     * @param onSuccess Funció que s'executa quan la creació és exitosa.
+     * @param onFailure Funció que s'executa en cas d'error durant la creació.
+     */
+    fun createMesura(mesura: Mesura, onSuccess: () -> Unit, onFailure: (String) -> Unit) {
+        val currentToken = token
+        if (currentToken != null) {
+            viewModelScope.launch {
+                try {
+                    val response = ApiClient.apiService.createMesura("Bearer $currentToken", mesura)
+                    if (response.isSuccessful) {
+                        onSuccess()
+                    } else {
+                        onFailure("No s'ha pogut crear la mesura. Codi de resposta: ${response.code()}")
+                    }
+                } catch (e: IOException) {
+                    onFailure("Error de connexió. Siusplau, comprova la teva connexió al servidor.")
+                } catch (e: HttpException) {
+                    onFailure("Error al servidor. Siusplau, intenta-ho més tard.")
+                }
+            }
+        } else {
+            onFailure("Token no vàlid, no es pot crear la mesura.")
+        }
+    }
+
+    /**
+     * Mètode per actualitzar una mesura de seguretat.
+     *
+     * @param id ID de la mesura a actualitzar.
+     * @param mesura Mesura amb les dades actualitzades.
+     * @param onSuccess Funció que s'executa quan l'actualització és exitosa.
+     * @param onFailure Funció que s'executa en cas d'error durant l'actualització.
+     */
+    fun updateMesura(id: Int, mesura: Mesura, onSuccess: () -> Unit, onFailure: (String) -> Unit) {
+        val currentToken = token
+        if (currentToken != null) {
+            viewModelScope.launch {
+                try {
+                    val response = ApiClient.apiService.updateMesura("Bearer $currentToken", id, mesura)
+                    if (response.isSuccessful) {
+                        onSuccess()
+                    } else {
+                        onFailure("No s'ha pogut actualitzar la mesura. Codi de resposta: ${response.code()}")
+                    }
+                } catch (e: IOException) {
+                    onFailure("Error de connexió. Siusplau, comprova la teva connexió al servidor.")
+                } catch (e: HttpException) {
+                    onFailure("Error al servidor. Siusplau, intenta-ho més tard.")
+                }
+            }
+        } else {
+            onFailure("Token no vàlid, no es pot actualitzar la mesura.")
+        }
+    }
+
+    /**
+     * Mètode per eliminar una mesura de seguretat.
+     *
+     * @param id ID de la mesura a eliminar.
+     * @param onSuccess Funció que s'executa quan l'eliminació és exitosa.
+     * @param onFailure Funció que s'executa en cas d'error durant l'eliminació.
+     */
+    fun deleteMesura(id: Int, onSuccess: () -> Unit, onFailure: (String) -> Unit) {
+        val currentToken = token
+        if (currentToken != null) {
+            viewModelScope.launch {
+                try {
+                    val response = ApiClient.apiService.deleteMesura("Bearer $currentToken", id)
+                    if (response.isSuccessful) {
+                        onSuccess()
+                    } else {
+                        onFailure("No s'ha pogut eliminar la mesura. Codi de resposta: ${response.code()}")
+                    }
+                } catch (e: IOException) {
+                    onFailure("Error de connexió. Siusplau, comprova la teva connexió al servidor.")
+                } catch (e: HttpException) {
+                    onFailure("Error al servidor. Siusplau, intenta-ho més tard.")
+                }
+            }
+        } else {
+            onFailure("Token no vàlid, no es pot eliminar la mesura.")
         }
     }
 }

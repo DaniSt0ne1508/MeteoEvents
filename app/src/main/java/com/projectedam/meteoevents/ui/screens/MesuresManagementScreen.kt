@@ -3,6 +3,7 @@ package com.projectedam.meteoevents.ui.screens
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -15,36 +16,37 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.projectedam.meteoevents.network.Esdeveniment
+import com.projectedam.meteoevents.network.Mesura
 
 /**
- * Pantalla de gestió d'esdeveniments.
+ * Pantalla de gestió de mesures de seguretat.
  *
- * Aquesta pantalla permet visualitzar, crear, editar i eliminar esdeveniments.
+ * Aquesta pantalla permet visualitzar, crear, editar i eliminar mesures de seguretat.
  *
- * @param userViewModel ViewModel que gestiona la lògica d'esdeveniments i usuaris.
+ * @param userViewModel ViewModel que gestiona la lògica de mesures de seguretat i usuaris.
  * @param onNavigateBack Callback per tornar a la pantalla anterior.
  */
 @Composable
-fun EsdevenimentsManagementScreen(
+fun MesuresSeguretatManagementScreen(
     userViewModel: UserViewModel = viewModel(),
     onNavigateBack: () -> Unit
 ) {
-    val esdevenimentsList = remember { mutableStateOf<List<Esdeveniment>>(emptyList()) }
+    val mesuresList = remember { mutableStateOf<List<Mesura>>(emptyList()) }
     val isLoading = remember { mutableStateOf(false) }
     val errorMessage = remember { mutableStateOf<String?>(null) }
     val isEditDialogOpen = remember { mutableStateOf(false) }
     val isCreateDialogOpen = remember { mutableStateOf(false) }
-    val esdevenimentToEdit = remember { mutableStateOf<Esdeveniment?>(null) }
+    val mesuraToEdit = remember { mutableStateOf<Mesura?>(null) }
     val isAdmin = userViewModel.funcionalId == "ADM"
 
     LaunchedEffect(Unit) {
         isLoading.value = true
-        userViewModel.seeEvents(
-            onSuccess = { events ->
-                esdevenimentsList.value = events
+        userViewModel.seeMesures(
+            onSuccess = { mesures ->
+                mesuresList.value = mesures
                 isLoading.value = false
             },
             onFailure = { error ->
@@ -53,6 +55,7 @@ fun EsdevenimentsManagementScreen(
             }
         )
     }
+
 
     Column(
         modifier = Modifier
@@ -70,7 +73,7 @@ fun EsdevenimentsManagementScreen(
         }
 
         Text(
-            "Gestió d'Esdeveniments",
+            "Gestió de Mesures de Seguretat",
             style = MaterialTheme.typography.bodyLarge,
             modifier = Modifier.padding(bottom = 16.dp)
         )
@@ -81,7 +84,7 @@ fun EsdevenimentsManagementScreen(
                 .fillMaxWidth()
                 .padding(bottom = 16.dp)
         ) {
-            Text("Crear Esdeveniment")
+            Text("Crear Mesura")
         }
 
         if (isLoading.value) {
@@ -98,20 +101,20 @@ fun EsdevenimentsManagementScreen(
                     Text("Tornar a la pantalla principal")
                 }
             } ?: LazyColumn(modifier = Modifier.fillMaxWidth()) {
-                items(esdevenimentsList.value) { esdeveniment ->
-                    EsdevenimentItem(
-                        esdeveniment = esdeveniment,
+                items(mesuresList.value) { mesura ->
+                    MesuraSeguretatItem(
+                        mesura = mesura,
                         isAdmin = isAdmin,
                         onEditClick = {
-                            esdevenimentToEdit.value = esdeveniment
+                            mesuraToEdit.value = mesura
                             isEditDialogOpen.value = true
                         },
                         onDeleteClick = {
-                            userViewModel.deleteEvent(
-                                id = esdeveniment.id!!,
+                            userViewModel.deleteMesura(
+                                id = mesura.id!!,
                                 onSuccess = {
-                                    esdevenimentsList.value =
-                                        esdevenimentsList.value.filter { it.id != esdeveniment.id }
+                                    mesuresList.value =
+                                        mesuresList.value.filter { it.id != mesura.id }
                                 },
                                 onFailure = { error -> errorMessage.value = error }
                             )
@@ -123,24 +126,20 @@ fun EsdevenimentsManagementScreen(
     }
 
     if (isCreateDialogOpen.value) {
-        EditEventDialog(
-            esdeveniment = Esdeveniment(
+        EditMesuraDialog(
+            mesura = Mesura(
                 id = null,
-                nom = "",
-                descripcio = "",
-                organitzador = "",
-                direccio = "",
-                aforament = "",
-                codiPostal = "",
-                horari = "",
-                poblacio = ""
+                condicio = "",
+                valor = 0.0,
+                valorUm = "",
+                accio = ""
             ),
             onDismiss = { isCreateDialogOpen.value = false }
-        ) { newEsdeveniment ->
-            userViewModel.createEvent(
-                esdeveniment = newEsdeveniment,
+        ) { newMesura ->
+            userViewModel.createMesura(
+                mesura = newMesura,
                 onSuccess = {
-                    esdevenimentsList.value = esdevenimentsList.value + newEsdeveniment
+                    mesuresList.value = mesuresList.value + newMesura
                     isCreateDialogOpen.value = false
                     onNavigateBack()
                 },
@@ -152,19 +151,19 @@ fun EsdevenimentsManagementScreen(
         }
     }
 
-    if (isEditDialogOpen.value && esdevenimentToEdit.value != null) {
-        EditEventDialog(
-            esdeveniment = esdevenimentToEdit.value!!,
+    if (isEditDialogOpen.value && mesuraToEdit.value != null) {
+        EditMesuraDialog(
+            mesura = mesuraToEdit.value!!,
             onDismiss = { isEditDialogOpen.value = false }
-        ) { updatedEsdeveniment ->
-            val esdevenimentId = updatedEsdeveniment.id
-            if (esdevenimentId != null) {
-                userViewModel.updateEvent(
-                    id = esdevenimentId,
-                    esdeveniment = updatedEsdeveniment,
+        ) { updatedMesura ->
+            val mesuraId = updatedMesura.id
+            if (mesuraId != null) {
+                userViewModel.updateMesura(
+                    id = mesuraId,
+                    mesura = updatedMesura,
                     onSuccess = {
-                        esdevenimentsList.value = esdevenimentsList.value.map {
-                            if (it.id == esdevenimentId) updatedEsdeveniment else it
+                        mesuresList.value = mesuresList.value.map {
+                            if (it.id == mesuraId) updatedMesura else it
                         }
                         isEditDialogOpen.value = false
                     },
@@ -174,28 +173,28 @@ fun EsdevenimentsManagementScreen(
                     }
                 )
             } else {
-                errorMessage.value = "El id de l'esdeveniment no és vàlid"
+                errorMessage.value = "El id de la mesura no és vàlid"
             }
         }
     }
 }
 
 /**
- * Representa un element d'esdeveniment dins d'una llista.
+ * Representa un element de mesura dins d'una llista.
  *
- * @param esdeveniment L'esdeveniment a mostrar.
- * @param onEditClick Callback per a editar l'esdeveniment.
- * @param onDeleteClick Callback per a eliminar l'esdeveniment.
+ * @param mesura La mesura de seguretat a mostrar.
+ * @param onEditClick Callback per a editar la mesura.
+ * @param onDeleteClick Callback per a eliminar la mesura.
  */
 @Composable
-fun EsdevenimentItem(esdeveniment: Esdeveniment, onEditClick: () -> Unit, onDeleteClick: () -> Unit, isAdmin: Boolean) {
+fun MesuraSeguretatItem(mesura: Mesura, onEditClick: () -> Unit, onDeleteClick: () -> Unit, isAdmin: Boolean) {
     Card(modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
         Column(modifier = Modifier.padding(16.dp)) {
-            Text("Nom: ${esdeveniment.nom}", fontWeight = FontWeight.Bold)
-            Text("Descripció: ${esdeveniment.descripcio}")
-            Text("Organitzador:: ${esdeveniment.organitzador}")
-            Text("Lloc: ${esdeveniment.direccio}")
-            if(isAdmin) {
+            Text("Condicio: ${mesura.condicio}", fontWeight = FontWeight.Bold)
+            Text("Valor: ${mesura.valor}")
+            Text("ValorUm: ${mesura.valorUm}")
+            Text("Acció: ${mesura.accio}")
+            if (isAdmin) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween
@@ -216,55 +215,64 @@ fun EsdevenimentItem(esdeveniment: Esdeveniment, onEditClick: () -> Unit, onDele
 }
 
 /**
- * Diàleg per editar o crear un esdeveniment.
+ * Diàleg per editar o crear una mesura de seguretat.
  *
- * @param esdeveniment L'esdeveniment a editar o base per a crear-ne un de nou.
+ * @param mesura La mesura de seguretat a editar o base per a crear-ne una de nova.
  * @param onDismiss Callback per tancar el diàleg sense guardar.
- * @param onSave Callback per guardar els canvis de l'esdeveniment.
+ * @param onSave Callback per guardar els canvis de la mesura.
  */
 @Composable
-fun EditEventDialog(
-    esdeveniment: Esdeveniment,
+fun EditMesuraDialog(
+    mesura: Mesura,
     onDismiss: () -> Unit,
-    onSave: (Esdeveniment) -> Unit
+    onSave: (Mesura) -> Unit
 ) {
-    var nom by remember { mutableStateOf(esdeveniment.nom) }
-    var descripcio by remember { mutableStateOf(esdeveniment.descripcio) }
-    var organitzador by remember { mutableStateOf(esdeveniment.organitzador) }
-    var direccio by remember { mutableStateOf(esdeveniment.direccio) }
+    var condicio by remember { mutableStateOf(mesura.condicio) }
+    var valor by remember { mutableStateOf(mesura.valor) }
+    var valorUm by remember { mutableStateOf(mesura.valorUm) }
+    var accio by remember { mutableStateOf(mesura.accio) }
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Editar Esdeveniment") },
+        title = { Text("Editar Mesura de Seguretat") },
         text = {
             Column {
                 TextField(
-                    value = nom,
-                    onValueChange = { nom = it },
-                    label = { Text("Nom") }
+                    value = condicio,
+                    onValueChange = { condicio = it },
+                    label = { Text("Condicio") }
+                )
+                //Implementat amb IA BlackBox, amb prompt: How do I pass a textfield with a double in Kotlin.
+                TextField(
+                    value = valor.toString(),
+                    onValueChange = { input ->
+                        valor = input.toDoubleOrNull() ?: valor
+                    },
+                    label = { Text("Valor") },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
                 )
                 TextField(
-                    value = descripcio,
-                    onValueChange = { descripcio = it },
-                    label = { Text("Descripció") }
+                    value = valorUm,
+                    onValueChange = { valorUm = it },
+                    label = { Text("ValorUm") }
                 )
                 TextField(
-                    value = organitzador,
-                    onValueChange = { organitzador = it },
-                    label = { Text("Organitzador") }
-                )
-                TextField(
-                    value = direccio,
-                    onValueChange = { direccio = it },
-                    label = { Text("Lloc") }
+                    value = accio,
+                    onValueChange = { accio = it },
+                    label = { Text("Acció") }
                 )
             }
         },
         confirmButton = {
             Button(
                 onClick = {
-                    val updatedEsdeveniment = esdeveniment.copy(nom = nom, descripcio = descripcio, organitzador = organitzador, direccio = direccio)
-                    onSave(updatedEsdeveniment)
+                    val updatedMesura = mesura.copy(
+                        condicio = condicio,
+                        valor = valor,
+                        valorUm = valorUm,
+                        accio = accio
+                    )
+                    onSave(updatedMesura)
                 }
             ) {
                 Text("Desar")

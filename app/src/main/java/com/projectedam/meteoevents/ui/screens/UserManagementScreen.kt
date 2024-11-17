@@ -125,6 +125,7 @@ fun UserManagementScreen(
                 onSuccess = {
                     userList.value = userList.value + newUser
                     isCreateDialogOpen.value = false
+                    onNavigateBack()
                 },
                 onFailure = { error ->
                     errorMessage.value = error

@@ -29,7 +29,8 @@ fun MainScreen(
     viewModel: UserViewModel,
     onLogout: () -> Unit,
     onUserManagement: () -> Unit,
-    onEventManagement: () -> Unit
+    onEventManagement: () -> Unit,
+    onMesuresManagement: ()-> Unit
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
     var showSnackbar by remember { mutableStateOf(false) }
@@ -82,13 +83,15 @@ fun MainScreen(
             Spacer(modifier = Modifier.height(8.dp))
             Button(onClick =  onEventManagement) { Text("Gestió Esdeveniment") }
             Spacer(modifier = Modifier.height(8.dp))
-            Button(onClick = { /* Modificar esdeveniment */ }) { Text("Gestió Mesures de Prevenció") }
+            Button(onClick = onMesuresManagement) { Text("Gestió Mesures de Prevenció") }
             Spacer(modifier = Modifier.height(8.dp))
             Button(onClick =  onUserManagement ) { Text("Gestió d'Usuari") }
         } else {
             Text("Pots realitzar les següents accions:")
             Spacer(modifier = Modifier.height(8.dp))
-            Button(onClick = { /* Veure esdeveniment */ }) { Text("Veure Esdeveniments") }
+            Button(onClick =  onEventManagement) { Text("Veure Esdeveniments") }
+            Spacer(modifier = Modifier.height(8.dp))
+            Button(onClick =  onMesuresManagement) { Text("Veure Mesures de Prevenció") }
             Spacer(modifier = Modifier.height(8.dp))
             Button(onClick =  onUserManagement ) { Text("Veure Perfil") }
         }

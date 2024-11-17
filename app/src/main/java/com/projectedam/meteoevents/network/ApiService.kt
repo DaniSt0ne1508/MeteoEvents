@@ -85,6 +85,23 @@ data class Esdeveniment(
     val horari: String
 )
 
+/**
+ * Data class que representa una mesura de seguretat.
+ *
+ * @param id Identificador de la mesura.
+ * @param condicio Condició associada a la mesura.
+ * @param valor Valor numèric de la mesura.
+ * @param valorUm Unitat de mesura del valor.
+ * @param accio Acció a prendre en cas que es compleixi la condició.
+ */
+data class Mesura(
+    val id: Int? = null,
+    val condicio: String,
+    val valor: Double,
+    val valorUm: String,
+    val accio: String
+)
+
 
 /**
  * Interface que defineix els serveis d'API.
@@ -138,6 +155,17 @@ interface ApiService {
     ): Response<List<Esdeveniment>>
 
     /**
+     * Mètode per obtenir el llistat de mesures de seguretat.
+     *
+     * @param authToken Token d'autenticació de l'usuari.
+     * @return Llistat de mesures de seguretat.
+     */
+    @GET("api/mesures")
+    suspend fun getMesures(
+        @Header("Authorization") authToken: String
+    ): Response<List<Mesura>>
+
+    /**
      * Mètode per obtenir un esdeveniment per ID.
      *
      * @param authToken Token d'autenticació de l'usuari.
@@ -149,6 +177,19 @@ interface ApiService {
         @Header("Authorization") authToken: String,
         @Path("esdevenimentId") esdevenimentId: Int
     ): Response<Esdeveniment>
+
+    /**
+     * Mètode per obtenir una mesura de seguretat per ID.
+     *
+     * @param authToken Token d'autenticació de l'usuari.
+     * @param mesuraId ID de la mesura de seguretat.
+     * @return Mesura de seguretat amb l'ID especificat.
+     */
+    @GET("api/mesures/{mesuraId}")
+    suspend fun getMesura(
+        @Header("Authorization") authToken: String,
+        @Path("mesuraId") mesuraId: Int
+    ): Response<Mesura>
 
     /**
      * Mètode per actualitzar la informació d'un usuari.
@@ -190,6 +231,21 @@ interface ApiService {
     ): Response<Unit>
 
     /**
+     * Mètode per actualitzar una mesura de seguretat existent.
+     *
+     * @param authToken Token d'autenticació de l'usuari.
+     * @param mesuraId ID de la mesura de seguretat a actualitzar.
+     * @param mesura Mesura de seguretat amb els canvis.
+     * @return Resposta de l'actualització.
+     */
+    @PUT("api/mesures/{mesuraId}")
+    suspend fun updateMesura(
+        @Header("Authorization") authToken: String,
+        @Path("mesuraId") mesuraId: Int,
+        @Body mesura: Mesura
+    ): Response<Unit>
+
+    /**
      * Mètode per eliminar un usuari.
      *
      * @param authToken Token d'autenticació de l'usuari.
@@ -215,6 +271,19 @@ interface ApiService {
         @Path("esdevenimentId") esdevenimentId: Int
     ): Response<Unit>
 
+    /**
+     * Mètode per eliminar una mesura de seguretat.
+     *
+     * @param authToken Token d'autenticació de l'usuari.
+     * @param mesuraId ID de la mesura de seguretat a eliminar.
+     * @return Resposta de l'eliminació.
+     */
+    @DELETE("api/mesures/{mesuraId}")
+    suspend fun deleteMesura(
+        @Header("Authorization") authToken: String,
+        @Path("mesuraId") mesuraId: Int
+    ): Response<Unit>
+
     @POST("api/usuaris")
     suspend fun createUser(
         @Header("Authorization") authToken: String,
@@ -232,6 +301,19 @@ interface ApiService {
     suspend fun createEsdeveniment(
         @Header("Authorization") authToken: String,
         @Body esdeveniment: Esdeveniment
+    ): Response<Unit>
+
+    /**
+     * Mètode per crear una nova mesura de seguretat.
+     *
+     * @param authToken Token d'autenticació de l'usuari.
+     * @param mesura Mesura de seguretat a crear.
+     * @return Resposta de la creació.
+     */
+    @POST("api/mesures")
+    suspend fun createMesura(
+        @Header("Authorization") authToken: String,
+        @Body mesura: Mesura
     ): Response<Unit>
 }
 
