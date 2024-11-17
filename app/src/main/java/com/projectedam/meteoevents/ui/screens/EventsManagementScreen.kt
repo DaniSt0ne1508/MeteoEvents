@@ -39,6 +39,7 @@ fun EsdevenimentsManagementScreen(
     val isCreateDialogOpen = remember { mutableStateOf(false) }
     val esdevenimentToEdit = remember { mutableStateOf<Esdeveniment?>(null) }
     val isAdmin = userViewModel.funcionalId == "ADM"
+    val eventToView = remember { mutableStateOf<Esdeveniment?>(null) }
 
     LaunchedEffect(Unit) {
         isLoading.value = true
@@ -50,6 +51,18 @@ fun EsdevenimentsManagementScreen(
             onFailure = { error ->
                 errorMessage.value = error
                 isLoading.value = false
+            }
+        )
+    }
+
+    val onViewEvent: (Int) -> Unit = { id ->
+        userViewModel.getEventById(
+            id = id,
+            onSuccess = { event ->
+                eventToView.value = event
+            },
+            onFailure = { error ->
+                errorMessage.value = error
             }
         )
     }
@@ -115,10 +128,37 @@ fun EsdevenimentsManagementScreen(
                                 },
                                 onFailure = { error -> errorMessage.value = error }
                             )
-                        }
+                        },
+                        onViewClick = onViewEvent
                     )
                 }
             }
+        }
+        eventToView.value?.let { event ->
+            AlertDialog(
+                onDismissRequest = { eventToView.value = null },
+                title = { Text("Detalls de la Mesura") },
+                text = {
+                    Column {
+                        Text("ID: ${event.id}")
+                        Text("Nom: ${event.nom}")
+                        Text("Descripció: ${event.descripcio}")
+                        Text("Organitzador: ${event.organitzador}")
+                        Text("Direccio: ${event.direccio}")
+                        Text("Codi Postal: ${event.codiPostal}")
+                        Text("Poblacio: ${event.poblacio}")
+                        Text("Aforament: ${event.aforament}")
+                        Text("Horari: ${event.horari}")
+                    }
+                },
+                confirmButton = {
+                    Button(
+                        onClick = { eventToView.value = null }
+                    ) {
+                        Text("Tancar")
+                    }
+                }
+            )
         }
     }
 
@@ -188,7 +228,7 @@ fun EsdevenimentsManagementScreen(
  * @param onDeleteClick Callback per a eliminar l'esdeveniment.
  */
 @Composable
-fun EsdevenimentItem(esdeveniment: Esdeveniment, onEditClick: () -> Unit, onDeleteClick: () -> Unit, isAdmin: Boolean) {
+fun EsdevenimentItem(esdeveniment: Esdeveniment, onEditClick: () -> Unit, onDeleteClick: () -> Unit, isAdmin: Boolean, onViewClick: (Int) -> Unit) {
     Card(modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
         Column(modifier = Modifier.padding(16.dp)) {
             Text("Nom: ${esdeveniment.nom}", fontWeight = FontWeight.Bold)

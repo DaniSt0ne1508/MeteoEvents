@@ -41,6 +41,7 @@ fun MesuresSeguretatManagementScreen(
     val isCreateDialogOpen = remember { mutableStateOf(false) }
     val mesuraToEdit = remember { mutableStateOf<Mesura?>(null) }
     val isAdmin = userViewModel.funcionalId == "ADM"
+    val mesuraToView = remember { mutableStateOf<Mesura?>(null) }
 
     LaunchedEffect(Unit) {
         isLoading.value = true
@@ -56,6 +57,17 @@ fun MesuresSeguretatManagementScreen(
         )
     }
 
+    val onViewMesura: (Int) -> Unit = { id ->
+        userViewModel.getMesuraById(
+            id = id,
+            onSuccess = { mesura ->
+                mesuraToView.value = mesura
+            },
+            onFailure = { error ->
+                errorMessage.value = error
+            }
+        )
+    }
 
     Column(
         modifier = Modifier
@@ -118,10 +130,33 @@ fun MesuresSeguretatManagementScreen(
                                 },
                                 onFailure = { error -> errorMessage.value = error }
                             )
-                        }
+                        },
+                        onViewClick = onViewMesura
                     )
                 }
             }
+        }
+        mesuraToView.value?.let { mesura ->
+            AlertDialog(
+                onDismissRequest = { mesuraToView.value = null },
+                title = { Text("Detalls de la Mesura") },
+                text = {
+                    Column {
+                        Text("ID: ${mesura.id}")
+                        Text("Condicio: ${mesura.condicio}")
+                        Text("Valor: ${mesura.valor}")
+                        Text("ValorUm: ${mesura.valorUm}")
+                        Text("Acció: ${mesura.accio}")
+                    }
+                },
+                confirmButton = {
+                    Button(
+                        onClick = { mesuraToView.value = null }
+                    ) {
+                        Text("Tancar")
+                    }
+                }
+            )
         }
     }
 
@@ -187,7 +222,7 @@ fun MesuresSeguretatManagementScreen(
  * @param onDeleteClick Callback per a eliminar la mesura.
  */
 @Composable
-fun MesuraSeguretatItem(mesura: Mesura, onEditClick: () -> Unit, onDeleteClick: () -> Unit, isAdmin: Boolean) {
+fun MesuraSeguretatItem(mesura: Mesura, onEditClick: () -> Unit, onDeleteClick: () -> Unit, isAdmin: Boolean, onViewClick: (Int) -> Unit) {
     Card(modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
         Column(modifier = Modifier.padding(16.dp)) {
             Text("Condicio: ${mesura.condicio}", fontWeight = FontWeight.Bold)
@@ -207,6 +242,12 @@ fun MesuraSeguretatItem(mesura: Mesura, onEditClick: () -> Unit, onDeleteClick: 
                         colors = ButtonDefaults.buttonColors(MaterialTheme.colorScheme.error)
                     ) {
                         Text("Elimina")
+                    }
+                    Button(
+                        onClick = { onViewClick(mesura.id!!) },
+                        colors = ButtonDefaults.buttonColors(MaterialTheme.colorScheme.primary)
+                    ) {
+                        Text("Veure")
                     }
                 }
             }
