@@ -89,16 +89,16 @@ fun MesuresSeguretatManagementScreen(
             style = MaterialTheme.typography.bodyLarge,
             modifier = Modifier.padding(bottom = 16.dp)
         )
-
-        Button(
-            onClick = { isCreateDialogOpen.value = true },
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(bottom = 16.dp)
-        ) {
-            Text("Crear Mesura")
+        if(isAdmin){
+            Button(
+                onClick = { isCreateDialogOpen.value = true },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 16.dp)
+            ) {
+                Text("Crear Mesura")
+            }
         }
-
         if (isLoading.value) {
             CircularProgressIndicator(modifier = Modifier.align(Alignment.CenterHorizontally))
         } else {

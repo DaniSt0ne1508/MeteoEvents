@@ -87,14 +87,15 @@ fun EsdevenimentsManagementScreen(
             style = MaterialTheme.typography.bodyLarge,
             modifier = Modifier.padding(bottom = 16.dp)
         )
-
-        Button(
-            onClick = { isCreateDialogOpen.value = true },
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(bottom = 16.dp)
-        ) {
-            Text("Crear Esdeveniment")
+        if(isAdmin){
+            Button(
+                onClick = { isCreateDialogOpen.value = true },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 16.dp)
+            ) {
+                Text("Crear Esdeveniment")
+            }
         }
 
         if (isLoading.value) {
@@ -234,7 +235,7 @@ fun EsdevenimentItem(esdeveniment: Esdeveniment, onEditClick: () -> Unit, onDele
             Text("Nom: ${esdeveniment.nom}", fontWeight = FontWeight.Bold)
             Text("Descripció: ${esdeveniment.descripcio}")
             Text("Organitzador:: ${esdeveniment.organitzador}")
-            Text("Lloc: ${esdeveniment.direccio}")
+            Text("Direccio: ${esdeveniment.direccio}")
             Button(
                 onClick = { onViewClick(esdeveniment.id!!) },
                 colors = ButtonDefaults.buttonColors(MaterialTheme.colorScheme.primary)
@@ -278,6 +279,10 @@ fun EditEventDialog(
     var descripcio by remember { mutableStateOf(esdeveniment.descripcio) }
     var organitzador by remember { mutableStateOf(esdeveniment.organitzador) }
     var direccio by remember { mutableStateOf(esdeveniment.direccio) }
+    var codiPostal by remember { mutableStateOf(esdeveniment.codiPostal) }
+    var poblacio by remember { mutableStateOf(esdeveniment.poblacio) }
+    var aforament by remember { mutableStateOf(esdeveniment.aforament) }
+    var horari by remember { mutableStateOf(esdeveniment.horari) }
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -302,7 +307,27 @@ fun EditEventDialog(
                 TextField(
                     value = direccio,
                     onValueChange = { direccio = it },
-                    label = { Text("Lloc") }
+                    label = { Text("Direccio") }
+                )
+                TextField(
+                    value = codiPostal,
+                    onValueChange = { codiPostal = it },
+                    label = { Text("Codi Postal") }
+                )
+                TextField(
+                    value = poblacio,
+                    onValueChange = { poblacio = it },
+                    label = { Text("Poblacio") }
+                )
+                TextField(
+                    value = aforament,
+                    onValueChange = { aforament = it },
+                    label = { Text("Aforament") }
+                )
+                TextField(
+                    value = horari,
+                    onValueChange = { horari = it },
+                    label = { Text("Horari") }
                 )
             }
         },
