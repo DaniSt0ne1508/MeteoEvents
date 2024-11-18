@@ -137,7 +137,7 @@ fun EsdevenimentsManagementScreen(
         eventToView.value?.let { event ->
             AlertDialog(
                 onDismissRequest = { eventToView.value = null },
-                title = { Text("Detalls de la Mesura") },
+                title = { Text("Detalls de l'Esdeveniment") },
                 text = {
                     Column {
                         Text("ID: ${event.id}")
