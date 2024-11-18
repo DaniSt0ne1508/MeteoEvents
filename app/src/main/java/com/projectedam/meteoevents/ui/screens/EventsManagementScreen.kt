@@ -275,14 +275,14 @@ fun EditEventDialog(
     onDismiss: () -> Unit,
     onSave: (Esdeveniment) -> Unit
 ) {
-    var nom by remember { mutableStateOf(esdeveniment.nom) }
-    var descripcio by remember { mutableStateOf(esdeveniment.descripcio) }
-    var organitzador by remember { mutableStateOf(esdeveniment.organitzador) }
-    var direccio by remember { mutableStateOf(esdeveniment.direccio) }
-    var codiPostal by remember { mutableStateOf(esdeveniment.codiPostal) }
-    var poblacio by remember { mutableStateOf(esdeveniment.poblacio) }
-    var aforament by remember { mutableStateOf(esdeveniment.aforament) }
-    var horari by remember { mutableStateOf(esdeveniment.horari) }
+    var nom by remember { mutableStateOf(esdeveniment.nom ?: "") }
+    var descripcio by remember { mutableStateOf(esdeveniment.descripcio ?: "") }
+    var organitzador by remember { mutableStateOf(esdeveniment.organitzador ?: "") }
+    var direccio by remember { mutableStateOf(esdeveniment.direccio ?: "") }
+    var codiPostal by remember { mutableStateOf(esdeveniment.codiPostal ?: "") }
+    var poblacio by remember { mutableStateOf(esdeveniment.poblacio ?: "") }
+    var aforament by remember { mutableStateOf(esdeveniment.aforament ?: "") }
+    var horari by remember { mutableStateOf(esdeveniment.horari ?: "") }
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -334,7 +334,16 @@ fun EditEventDialog(
         confirmButton = {
             Button(
                 onClick = {
-                    val updatedEsdeveniment = esdeveniment.copy(nom = nom, descripcio = descripcio, organitzador = organitzador, direccio = direccio)
+                    val updatedEsdeveniment = esdeveniment.copy(
+                        nom = nom,
+                        descripcio = descripcio,
+                        organitzador = organitzador,
+                        direccio = direccio,
+                        codiPostal = codiPostal,
+                        poblacio = poblacio,
+                        aforament = aforament,
+                        horari = horari
+                    )
                     onSave(updatedEsdeveniment)
                 }
             ) {
