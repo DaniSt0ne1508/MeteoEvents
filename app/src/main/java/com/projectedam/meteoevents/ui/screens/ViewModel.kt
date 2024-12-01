@@ -1,10 +1,14 @@
 package com.projectedam.meteoevents.ui.screens
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.google.gson.Gson
 import com.projectedam.meteoevents.network.ApiClient
 import com.projectedam.meteoevents.network.ApiService
+import com.projectedam.meteoevents.network.CipherUtil
 import com.projectedam.meteoevents.network.Esdeveniment
+import com.projectedam.meteoevents.network.LoginResponse
 import com.projectedam.meteoevents.network.Mesura
 import com.projectedam.meteoevents.network.User
 import kotlinx.coroutines.launch
@@ -27,23 +31,48 @@ class UserViewModel(apiService: ApiService) : ViewModel() {
      * @param onSuccess Funció que s'executa quan el login és exitós.
      * @param onFailure Funció que s'executa en cas d'error durant el login.
      */
-    fun login(username: String, password: String, onSuccess: (String, String) -> Unit, onFailure: (String) -> Unit) {
+    fun login(
+        username: String,
+        password: String,
+        onSuccess: (String, String) -> Unit,
+        onFailure: (String) -> Unit
+    ) {
         viewModelScope.launch {
             try {
                 val response = ApiClient.apiService.login(username, password)
+
                 if (response.isSuccessful && response.body() != null) {
-                    val loginResponse = response.body()!!
+                    val encryptedResponse = response.body()!!.string()
+
+                    val decryptedResponse = try {
+                        CipherUtil.decrypt(encryptedResponse) // Desencriptar string
+                    } catch (e: Exception) {
+                        onFailure("Error al desxifrar la resposta del servidor: ${e.message}")
+                        return@launch
+                    }
+
+                    val loginResponse = try {
+                        Gson().fromJson(decryptedResponse, LoginResponse::class.java)
+                    } catch (e: Exception) {
+                        onFailure("Error al parsejar la resposta desxifrada: ${e.message}")
+                        return@launch
+                    }
+
                     token = loginResponse.token
                     funcionalId = loginResponse.funcionalId
                     currentUserName = username
+
                     onSuccess(loginResponse.token, loginResponse.funcionalId)
                 } else {
                     onFailure("Login fallit. Codi de resposta: ${response.code()}")
                 }
             } catch (e: IOException) {
+                Log.e("Login", "Error de connexió: ${e.localizedMessage}")
                 onFailure("Error de connexió. Siusplau, comprova la teva connexió al servidor.")
             } catch (e: HttpException) {
                 onFailure("Error al servidor. Siusplau, intenta-ho més tard.")
+            } catch (e: Exception) {
+                onFailure("Error inesperat: ${e.message}")
             }
         }
     }

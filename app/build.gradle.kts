@@ -73,20 +73,20 @@ dependencies {
     //Imports
     implementation(libs.retrofit)
     implementation(libs.converter.gson)
-    implementation (libs.kotlin.reflect)
+    implementation(libs.kotlin.reflect)
     //Test
-    implementation (libs.kotlinx.coroutines.core)
-    implementation (libs.kotlinx.coroutines.android)
-    testImplementation (libs.kotlinx.coroutines.test) 
-    testImplementation (libs.junit)
-    testImplementation (libs.androidx.core.testing)
-    testImplementation (libs.mockito.core)
-    testImplementation (libs.mockito.inline)
-    testImplementation (libs.kotlinx.coroutines.test)
-    testImplementation (libs.mockito.core)
-    testImplementation (libs.mockito.kotlin)
-    testImplementation ("com.squareup.okhttp3:mockwebserver:4.9.0")
-    testImplementation ("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.5.2")
+    implementation(libs.kotlinx.coroutines.core)
+    implementation(libs.kotlinx.coroutines.android)
+    testImplementation(libs.kotlinx.coroutines.test)
+    testImplementation(libs.junit)
+    testImplementation(libs.androidx.core.testing)
+    testImplementation(libs.mockito.core)
+    testImplementation(libs.mockito.inline)
+    testImplementation(libs.kotlinx.coroutines.test)
+    testImplementation(libs.mockito.core)
+    testImplementation(libs.mockito.kotlin)
+    testImplementation("com.squareup.okhttp3:mockwebserver:4.9.0")
+    testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.5.2")
 }
 
 

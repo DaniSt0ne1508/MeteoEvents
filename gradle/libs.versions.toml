@@ -1,6 +1,7 @@
 [versions]
 agp = "8.6.0"
 androidxEspressoCore = "3.5.1"
+androidxEspressoCoreVersion = "3.5.0"
 androidxJunit = "1.1.3"
 androidxJunitVersion = "1.1.5"
 converterGson = "2.9.0"
@@ -22,6 +23,8 @@ kotlinxCoroutinesTestVersion = "1.7.0"
 lifecycleRuntimeKtx = "2.8.6"
 activityCompose = "1.9.2"
 composeBom = "2024.04.01"
+lifecycleViewmodelKtx = "2.8.7"
+mockitoAndroid = "5.5.0"
 mockitoCore = "5.3.1"
 mockitoCoreVersion = "4.6.1"
 mockitoInline = "4.6.1"
@@ -29,6 +32,7 @@ mockitoInlineVersion = "4.0.0"
 mockitoKotlin = "5.0.0"
 mockitoKotlinVersion = "4.0.0"
 mockitoMockitoCore = "4.0.0"
+mockitoMockitoCoreVersion = "5.5.0"
 mockk = "1.12.2"
 mockwebserver = "5.0.0"
 navigationCompose = "2.8.2"
@@ -45,10 +49,13 @@ xandroidxEspressoCore = "3.5.1' "
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
 androidx-core-testing = { module = "androidx.arch.core:core-testing", version.ref = "coreTesting" }
 androidx-core-testing-v210 = { module = "androidx.arch.core:core-testing", version.ref = "coreTestingVersion" }
+androidx-espresso-contrib = { module = "androidx.test.espresso:espresso-contrib", version.ref = "androidxEspressoCoreVersion" }
 androidx-espresso-core-v340 = { module = "androidx.test.espresso:espresso-core", version.ref = "espressoCoreVersion" }
+androidx-espresso-core-v350 = { module = "androidx.test.espresso:espresso-core", version.ref = "androidxEspressoCoreVersion" }
 androidx-espresso-core-v351 = { module = "androidx.test.espresso:espresso-core", version.ref = "androidxEspressoCore" }
 androidx-junit-v113 = { module = "androidx.test.ext:junit", version.ref = "androidxJunit" }
 androidx-junit-v115 = { module = "androidx.test.ext:junit", version.ref = "androidxJunitVersion" }
+androidx-lifecycle-viewmodel-ktx = { module = "androidx.lifecycle:lifecycle-viewmodel-ktx", version.ref = "lifecycleViewmodelKtx" }
 androidx-rules = { module = "androidx.test:rules", version.ref = "rules" }
 androidx-rules-v152 = { module = "androidx.test:rules", version.ref = "rulesVersion" }
 androidx-runner = { module = "androidx.test:runner", version.ref = "runner" }
@@ -76,9 +83,11 @@ kotlinx-coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-t
 kotlinx-coroutines-test-v160 = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-test", version.ref = "jetbrainsKotlinxCoroutinesTestVersion" }
 kotlinx-coroutines-test-v164 = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-test", version.ref = "jetbrainsKotlinxCoroutinesTest" }
 kotlinx-coroutines-test-v170 = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-test", version.ref = "kotlinxCoroutinesTestVersion" }
+mockito-android = { module = "org.mockito:mockito-android", version.ref = "mockitoAndroid" }
 mockito-core = { module = "org.mockito:mockito-core", version.ref = "mockitoCore" }
 mockito-core-v400 = { module = "org.mockito:mockito-core", version.ref = "mockitoMockitoCore" }
 mockito-core-v461 = { module = "org.mockito:mockito-core", version.ref = "mockitoCoreVersion" }
+mockito-core-v550 = { module = "org.mockito:mockito-core", version.ref = "mockitoMockitoCoreVersion" }
 mockito-inline = { module = "org.mockito:mockito-inline", version.ref = "mockitoInline" }
 mockito-inline-v400 = { module = "org.mockito:mockito-inline", version.ref = "mockitoInlineVersion" }
 mockito-kotlin = { module = "org.mockito.kotlin:mockito-kotlin", version.ref = "mockitoKotlin" }

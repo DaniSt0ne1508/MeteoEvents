@@ -1,6 +1,7 @@
 package com.projectedam.meteoevents.network
 
 import com.google.gson.annotations.SerializedName
+import okhttp3.ResponseBody
 import retrofit2.http.POST
 import retrofit2.Response
 import retrofit2.Retrofit
@@ -119,7 +120,7 @@ interface ApiService {
     suspend fun login(
         @Field("nomUsuari") username: String,
         @Field("contrasenya") password: String
-    ): Response<LoginResponse>
+    ): Response<ResponseBody>
 
     /**
      * Mètode per realitzar el logout de l'usuari.
@@ -334,5 +335,7 @@ object ApiClient {
             .create(ApiService::class.java)
     }
 }
+
+
 
 
