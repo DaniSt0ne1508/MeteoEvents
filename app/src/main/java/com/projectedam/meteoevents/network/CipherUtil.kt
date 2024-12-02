@@ -33,7 +33,7 @@ object CipherUtil {
         val base64Encrypted = Base64.encodeToString(encryptedBytes, Base64.DEFAULT)
 
         // Retorna el text xifrat amb el prefix "ENC_"
-        return PREFIX + base64Encrypted.trim()
+        return PREFIX + base64Encrypted.replace("\n", "").replace("\r", "")
     }
 
     /**
