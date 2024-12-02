@@ -117,16 +117,42 @@ class UserViewModel(apiService: ApiService) : ViewModel() {
         if (currentToken != null) {
             viewModelScope.launch {
                 try {
-                    val response = ApiClient.apiService.getUsers("Bearer $currentToken")
+                    val encryptedToken = try {
+                        CipherUtil.encrypt(currentToken)
+                    } catch (e: Exception) {
+                        onFailure("Error al encriptar el token: ${e.message}")
+                        return@launch
+                    }
+
+                    val response = ApiClient.apiService.getUsers("Bearer $encryptedToken")
+
                     if (response.isSuccessful && response.body() != null) {
-                        onSuccess(response.body()!!)
+                        val encryptedResponse = response.body()!!.string()
+
+                        val decryptedResponse = try {
+                            CipherUtil.decrypt(encryptedResponse)
+                        } catch (e: Exception) {
+                            onFailure("Error al desxifrar la resposta del servidor: ${e.message}")
+                            return@launch
+                        }
+
+                        val usersList = try {
+                            Gson().fromJson(decryptedResponse, Array<User>::class.java).toList()
+                        } catch (e: Exception) {
+                            onFailure("Error al parsejar la resposta desxifrada: ${e.message}")
+                            return@launch
+                        }
+
+                        onSuccess(usersList)
                     } else {
-                        onFailure("No s'ha pogut obtenir la llista d'usuaris. Codi de resposta: ${response.code()}")
+                        onFailure("Error en la resposta del servidor: ${response.code()}")
                     }
                 } catch (e: IOException) {
-                    onFailure("Error de connexió. Siusplau, comprova la teva connexió al servidor.")
+                    onFailure("Error de connexió. Si us plau, comprova la teva connexió al servidor.")
                 } catch (e: HttpException) {
-                    onFailure("Error al servidor. Siusplau, intenta-ho més tard.")
+                    onFailure("Error al servidor. Si us plau, intenta-ho més tard.")
+                } catch (e: Exception) {
+                    onFailure("Error inesperat: ${e.message}")
                 }
             }
         } else {

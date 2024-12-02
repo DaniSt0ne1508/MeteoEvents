@@ -131,7 +131,7 @@ interface ApiService {
     @POST("api/usuaris/logout")
     suspend fun logout(
         @Header("Authorization") authToken: String
-    ): Response<Unit>
+    ): Response<ResponseBody>
 
     /**
      * Mètode per obtenir la llista d'usuaris.
@@ -142,7 +142,7 @@ interface ApiService {
     @GET("api/usuaris")
     suspend fun getUsers(
         @Header("Authorization") authToken: String
-    ): Response<List<User>>
+    ): Response<ResponseBody>
 
     /**
      * Mètode per obtenir el llistat d'esdeveniments.

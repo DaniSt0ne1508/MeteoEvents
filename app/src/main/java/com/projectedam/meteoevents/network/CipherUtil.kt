@@ -9,55 +9,30 @@ import android.util.Base64
 //Copiat i basat en la classe d'en Rober CipherUtil.java
 object CipherUtil {
 
-    private const val ALGORITHM = "AES" // Algoritme de xifrat utilitzat
-    private const val PREFIX = "ENC_" // Prefix que identifica les dades xifrades
-    private const val SECRET_KEY = "MeteoEventsSecrt" // Clau secreta de 16 bytes (identica al servidor)
+    private const val ALGORITHM = "AES"
+    private const val ENCRYPTION_PREFIX = "ENC_"
+    private val SECRET_KEY = "MeteoEventsSecrt".toByteArray()
 
-    // Clau secreta com a objecte SecretKey
-    private val secretKey: SecretKey = SecretKeySpec(SECRET_KEY.toByteArray(Charsets.UTF_8), ALGORITHM)
-
-    /**
-     * Xifra un text pla utilitzant l'algoritme AES i afegeix el prefix "ENC_".
-     * @param data Text pla que es vol xifrar.
-     * @return Text xifrat en Base64 amb el prefix "ENC_".
-     */
     fun encrypt(data: String): String {
-        // Inicialitza el Cipher en mode ENCRYPT (xifrat)
+        val secretKey: SecretKey = SecretKeySpec(SECRET_KEY, ALGORITHM)
         val cipher = Cipher.getInstance(ALGORITHM)
         cipher.init(Cipher.ENCRYPT_MODE, secretKey)
-
-        // Xifra el text pla i genera les dades xifrades
-        val encryptedBytes = cipher.doFinal(data.toByteArray(Charsets.UTF_8))
-
-        // Codifica les dades xifrades a Base64
-        val base64Encrypted = Base64.encodeToString(encryptedBytes, Base64.DEFAULT)
-
-        // Retorna el text xifrat amb el prefix "ENC_"
-        return PREFIX + base64Encrypted.replace("\n", "").replace("\r", "")
+        val encryptedData = cipher.doFinal(data.toByteArray(Charsets.UTF_8))
+        return ENCRYPTION_PREFIX + Base64.encodeToString(encryptedData, Base64.NO_WRAP)
     }
 
-    /**
-     * Desxifra un text xifrat amb el prefix "ENC_".
-     * @param encryptedData Text xifrat amb el prefix "ENC_".
-     * @return Text pla desxifrat.
-     */
     fun decrypt(encryptedData: String): String {
-        // Comprova que el text comenci amb el prefix "ENC_"
-        if (!encryptedData.startsWith(PREFIX)) {
-            throw IllegalArgumentException("El text no conté el prefix esperat ($PREFIX).")
+        if (!encryptedData.startsWith(ENCRYPTION_PREFIX)) {
+            throw IllegalArgumentException("El texto no está cifrado con el formato esperado.")
         }
-
-        // Elimina el prefix "ENC_" del text xifrat
-        val base64Data = encryptedData.removePrefix(PREFIX)
-
-        // Decodifica les dades de Base64
-        val decodedBytes = Base64.decode(base64Data, Base64.DEFAULT)
-
-        // Inicialitza el Cipher en mode DECRYPT (desxifrat)
+        val base64Data = encryptedData.removePrefix(ENCRYPTION_PREFIX)
+        if (!base64Data.matches("^[A-Za-z0-9+/=]*$".toRegex())) {
+            throw IllegalArgumentException("Los datos contienen caracteres no válidos para Base64.")
+        }
+        val secretKey: SecretKey = SecretKeySpec(SECRET_KEY, ALGORITHM)
         val cipher = Cipher.getInstance(ALGORITHM)
         cipher.init(Cipher.DECRYPT_MODE, secretKey)
-
-        // Desxifra les dades i retorna el text pla
-        return String(cipher.doFinal(decodedBytes), Charsets.UTF_8)
+        val decodedData = Base64.decode(base64Data, Base64.NO_WRAP)
+        return String(cipher.doFinal(decodedData), Charsets.UTF_8)
     }
 }
