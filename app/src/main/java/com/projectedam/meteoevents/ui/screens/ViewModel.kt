@@ -88,7 +88,14 @@ class UserViewModel(apiService: ApiService) : ViewModel() {
         if (currentToken != null) {
             viewModelScope.launch {
                 try {
-                    val response = ApiClient.apiService.logout("Bearer $currentToken")
+                    val encryptedToken = try {
+                        CipherUtil.encrypt(currentToken)
+                    } catch (e: Exception) {
+                        onFailure("Error al encriptar el token: ${e.message}")
+                        return@launch
+                    }
+
+                    val response = ApiClient.apiService.logout("Bearer $encryptedToken")
                     if (response.isSuccessful) {
                         token = null
                         funcionalId = null
@@ -97,15 +104,18 @@ class UserViewModel(apiService: ApiService) : ViewModel() {
                         onFailure("Logout fallit. Codi de resposta: ${response.code()}")
                     }
                 } catch (e: IOException) {
-                    onFailure("Error de connexió. Siusplau, comprova la teva connexió al servidor.")
+                    onFailure("Error de connexió. Si us plau, comprova la teva connexió al servidor.")
                 } catch (e: HttpException) {
-                    onFailure("Error al servidor. Siusplau, intenta-ho més tard.")
+                    onFailure("Error al servidor. Si us plau, intenta-ho més tard.")
+                } catch (e: Exception) {
+                    onFailure("Error inesperat: ${e.message}")
                 }
             }
         } else {
             onFailure("Token no vàlid, no s'ha pogut tancar sessió.")
         }
     }
+
     /**
      * Mètode per obtenir la llista d'usuaris.
      *
@@ -172,11 +182,27 @@ class UserViewModel(apiService: ApiService) : ViewModel() {
         if (currentToken != null) {
             viewModelScope.launch {
                 try {
+                    val encryptedToken = try {
+                        CipherUtil.encrypt(currentToken)
+                    } catch (e: Exception) {
+                        onFailure("Error en xifrar el token: ${e.message}")
+                        return@launch
+                    }
+
+                    val encryptedUser = try {
+                        val userJson = Gson().toJson(user)
+                        CipherUtil.encrypt(userJson)
+                    } catch (e: Exception) {
+                        onFailure("Error en xifrar les dades de l'usuari: ${e.message}")
+                        return@launch
+                    }
+
                     val response = ApiClient.apiService.updateUser(
-                        authToken = "Bearer $currentToken",
+                        authToken = "Bearer $encryptedToken",
                         userId = user.id,
-                        user = user  // Pasar el objeto user directamente
+                        user = encryptedUser
                     )
+
                     if (response.isSuccessful) {
                         onSuccess()
                     } else {
@@ -186,6 +212,8 @@ class UserViewModel(apiService: ApiService) : ViewModel() {
                     onFailure("Error de connexió. Siusplau, comprova la teva connexió al servidor.")
                 } catch (e: HttpException) {
                     onFailure("Error al servidor. Siusplau, intenta-ho més tard.")
+                } catch (e: Exception) {
+                    onFailure("Error inesperat: ${e.message}")
                 }
             }
         } else {
@@ -193,7 +221,7 @@ class UserViewModel(apiService: ApiService) : ViewModel() {
         }
     }
 
-        /**
+    /**
      * Mètode per eliminar un usuari.
      *
      * @param userId ID de l'usuari a eliminar.
@@ -205,7 +233,15 @@ class UserViewModel(apiService: ApiService) : ViewModel() {
         if (currentToken != null) {
             viewModelScope.launch {
                 try {
-                    val response = ApiClient.apiService.deleteUser("Bearer $currentToken", userId)
+                    val encryptedToken = try {
+                        CipherUtil.encrypt(currentToken)
+                    } catch (e: Exception) {
+                        onFailure("Error en xifrar el token: ${e.message}")
+                        return@launch
+                    }
+
+                    val response = ApiClient.apiService.deleteUser("Bearer $encryptedToken", userId)
+
                     if (response.isSuccessful) {
                         onSuccess()
                     } else {
@@ -215,6 +251,8 @@ class UserViewModel(apiService: ApiService) : ViewModel() {
                     onFailure("Error de connexió. Siusplau, comprova la teva connexió al servidor.")
                 } catch (e: HttpException) {
                     onFailure("Error al servidor. Siusplau, intenta-ho més tard.")
+                } catch (e: Exception) {
+                    onFailure("Error inesperat: ${e.message}")
                 }
             }
         } else {
@@ -222,15 +260,37 @@ class UserViewModel(apiService: ApiService) : ViewModel() {
         }
     }
 
+    /**
+     * Mètode per crear un usuari.
+     *
+     * @param user L'usuari a crear, representat com un objecte User.
+     * @param onSuccess Funció que s'executa quan l'usuari es crea correctament.
+     * @param onFailure Funció que s'executa si hi ha un error, passant un missatge d'error.
+     */
     fun createUser(user: User, onSuccess: () -> Unit, onFailure: (String) -> Unit) {
         val currentToken = token
         if (currentToken != null) {
             viewModelScope.launch {
                 try {
+                    val encryptedToken = try {
+                        CipherUtil.encrypt(currentToken)
+                    } catch (e: Exception) {
+                        onFailure("Error en xifrar el token: ${e.message}")
+                        return@launch
+                    }
+
+                    val encryptedUser = try {
+                        CipherUtil.encrypt(Gson().toJson(user))
+                    } catch (e: Exception) {
+                        onFailure("Error en xifrar l'usuari: ${e.message}")
+                        return@launch
+                    }
+
                     val response = ApiClient.apiService.createUser(
-                        authToken = "Bearer $currentToken",
-                        user = user
+                        authToken = "Bearer $encryptedToken",
+                        user = encryptedUser
                     )
+
                     if (response.isSuccessful) {
                         onSuccess()
                     } else {
@@ -240,6 +300,8 @@ class UserViewModel(apiService: ApiService) : ViewModel() {
                     onFailure("Error de connexió. Siusplau, comprova la teva connexió al servidor.")
                 } catch (e: HttpException) {
                     onFailure("Error al servidor. Siusplau, intenta-ho més tard.")
+                } catch (e: Exception) {
+                    onFailure("Error inesperat: ${e.message}")
                 }
             }
         } else {
@@ -247,14 +309,45 @@ class UserViewModel(apiService: ApiService) : ViewModel() {
         }
     }
 
+    /**
+     * Mètode per veure els esdeveniments.
+     *
+     * @param onSuccess Funció que s'executa quan la crida a l'API és exitosa i es recupera la llista d'esdeveniments.
+     * @param onFailure Funció que s'executa quan hi ha un error, passant un missatge d'error.
+     */
     fun seeEvents(onSuccess: (List<Esdeveniment>) -> Unit, onFailure: (String) -> Unit) {
         val currentToken = token
         if (currentToken != null) {
             viewModelScope.launch {
                 try {
-                    val response = ApiClient.apiService.getEsdeveniments("Bearer $currentToken")
+                    val encryptedToken = try {
+                        CipherUtil.encrypt(currentToken)
+                    } catch (e: Exception) {
+                        onFailure("Error en xifrar el token: ${e.message}")
+                        return@launch
+                    }
+
+                    val response = ApiClient.apiService.getEsdeveniments("Bearer $encryptedToken")
+
                     if (response.isSuccessful && response.body() != null) {
-                        onSuccess(response.body()!!)
+                        val encryptedResponse = response.body()!!.string()
+
+                        val decryptedResponse = try {
+                            CipherUtil.decrypt(encryptedResponse)
+                        } catch (e: Exception) {
+                            onFailure("Error en desxifrar la resposta: ${e.message}")
+                            return@launch
+                        }
+
+                        val eventsList = try {
+                            Gson().fromJson(decryptedResponse, Array<Esdeveniment>::class.java)
+                                .toList()
+                        } catch (e: Exception) {
+                            onFailure("Error en parsejar la resposta desxifrada: ${e.message}")
+                            return@launch
+                        }
+
+                        onSuccess(eventsList)
                     } else {
                         onFailure("No s'ha pogut obtenir el llistat d'esdeveniments. Codi de resposta: ${response.code()}")
                     }
@@ -262,6 +355,8 @@ class UserViewModel(apiService: ApiService) : ViewModel() {
                     onFailure("Error de connexió. Siusplau, comprova la teva connexió al servidor.")
                 } catch (e: HttpException) {
                     onFailure("Error al servidor. Siusplau, intenta-ho més tard.")
+                } catch (e: Exception) {
+                    onFailure("Error inesperat: ${e.message}")
                 }
             }
         } else {
@@ -281,9 +376,34 @@ class UserViewModel(apiService: ApiService) : ViewModel() {
         if (currentToken != null) {
             viewModelScope.launch {
                 try {
-                    val response = ApiClient.apiService.getEsdeveniment("Bearer $currentToken", id)
+                    val encryptedToken = try {
+                        CipherUtil.encrypt(currentToken)
+                    } catch (e: Exception) {
+                        onFailure("Error al encriptar el token: ${e.message}")
+                        return@launch
+                    }
+
+                    val response =
+                        ApiClient.apiService.getEsdeveniment("Bearer $encryptedToken", id)
+
                     if (response.isSuccessful && response.body() != null) {
-                        onSuccess(response.body()!!)
+                        val encryptedResponse = response.body()!!.string()
+
+                        val decryptedResponse = try {
+                            CipherUtil.decrypt(encryptedResponse)
+                        } catch (e: Exception) {
+                            onFailure("Error al descifrar la resposta del servidor: ${e.message}")
+                            return@launch
+                        }
+
+                        val event = try {
+                            Gson().fromJson(decryptedResponse, Esdeveniment::class.java)
+                        } catch (e: Exception) {
+                            onFailure("Error al parsejar la resposta descifrada: ${e.message}")
+                            return@launch
+                        }
+
+                        onSuccess(event)
                     } else {
                         onFailure("No s'ha pogut obtenir l'esdeveniment. Codi de resposta: ${response.code()}")
                     }
@@ -305,12 +425,35 @@ class UserViewModel(apiService: ApiService) : ViewModel() {
      * @param onSuccess Funció que s'executa quan la creació és exitosa.
      * @param onFailure Funció que s'executa en cas d'error durant la creació.
      */
-    fun createEvent(esdeveniment: Esdeveniment, onSuccess: () -> Unit, onFailure: (String) -> Unit) {
+    fun createEvent(
+        esdeveniment: Esdeveniment,
+        onSuccess: () -> Unit,
+        onFailure: (String) -> Unit
+    ) {
         val currentToken = token
         if (currentToken != null) {
             viewModelScope.launch {
                 try {
-                    val response = ApiClient.apiService.createEsdeveniment("Bearer $currentToken", esdeveniment)
+                    val encryptedToken = try {
+                        CipherUtil.encrypt(currentToken)
+                    } catch (e: Exception) {
+                        onFailure("Error al encriptar el token: ${e.message}")
+                        return@launch
+                    }
+
+                    val encryptedEsdeveniment = try {
+                        val json = Gson().toJson(esdeveniment)
+                        CipherUtil.encrypt(json)
+                    } catch (e: Exception) {
+                        onFailure("Error al encriptar l'esdeveniment: ${e.message}")
+                        return@launch
+                    }
+
+                    val response = ApiClient.apiService.createEsdeveniment(
+                        "Bearer $encryptedToken",
+                        encryptedEsdeveniment
+                    )
+
                     if (response.isSuccessful) {
                         onSuccess()
                     } else {
@@ -335,12 +478,37 @@ class UserViewModel(apiService: ApiService) : ViewModel() {
      * @param onSuccess Funció que s'executa quan l'actualització és exitosa.
      * @param onFailure Funció que s'executa en cas d'error durant l'actualització.
      */
-    fun updateEvent(id: Int, esdeveniment: Esdeveniment, onSuccess: () -> Unit, onFailure: (String) -> Unit) {
+    fun updateEvent(
+        id: Int,
+        esdeveniment: Esdeveniment,
+        onSuccess: () -> Unit,
+        onFailure: (String) -> Unit
+    ) {
         val currentToken = token
         if (currentToken != null) {
             viewModelScope.launch {
                 try {
-                    val response = ApiClient.apiService.updateEsdeveniment("Bearer $currentToken", id, esdeveniment)
+                    val encryptedToken = try {
+                        CipherUtil.encrypt(currentToken)
+                    } catch (e: Exception) {
+                        onFailure("Error al encriptar el token: ${e.message}")
+                        return@launch
+                    }
+
+                    val encryptedEsdeveniment = try {
+                        val json = Gson().toJson(esdeveniment)
+                        CipherUtil.encrypt(json)
+                    } catch (e: Exception) {
+                        onFailure("Error al encriptar l'esdeveniment: ${e.message}")
+                        return@launch
+                    }
+
+                    val response = ApiClient.apiService.updateEsdeveniment(
+                        "Bearer $encryptedToken",
+                        id,
+                        encryptedEsdeveniment
+                    )
+
                     if (response.isSuccessful) {
                         onSuccess()
                     } else {
@@ -369,7 +537,16 @@ class UserViewModel(apiService: ApiService) : ViewModel() {
         if (currentToken != null) {
             viewModelScope.launch {
                 try {
-                    val response = ApiClient.apiService.deleteEsdeveniment("Bearer $currentToken", id)
+                    val encryptedToken = try {
+                        CipherUtil.encrypt(currentToken)
+                    } catch (e: Exception) {
+                        onFailure("Error al encriptar el token: ${e.message}")
+                        return@launch
+                    }
+
+                    val response =
+                        ApiClient.apiService.deleteEsdeveniment("Bearer $encryptedToken", id)
+
                     if (response.isSuccessful) {
                         onSuccess()
                     } else {
@@ -397,9 +574,33 @@ class UserViewModel(apiService: ApiService) : ViewModel() {
         if (currentToken != null) {
             viewModelScope.launch {
                 try {
-                    val response = ApiClient.apiService.getMesures("Bearer $currentToken")
+                    val encryptedToken = try {
+                        CipherUtil.encrypt(currentToken)
+                    } catch (e: Exception) {
+                        onFailure("Error en xifrar el token: ${e.message}")
+                        return@launch
+                    }
+
+                    val response = ApiClient.apiService.getMesures("Bearer $encryptedToken")
+
                     if (response.isSuccessful && response.body() != null) {
-                        onSuccess(response.body()!!)
+                        val encryptedResponse = response.body()!!.string()
+
+                        val decryptedResponse = try {
+                            CipherUtil.decrypt(encryptedResponse)
+                        } catch (e: Exception) {
+                            onFailure("Error en desxifrar la resposta: ${e.message}")
+                            return@launch
+                        }
+
+                        val measuresList = try {
+                            Gson().fromJson(decryptedResponse, Array<Mesura>::class.java).toList()
+                        } catch (e: Exception) {
+                            onFailure("Error en parsejar la resposta desxifrada: ${e.message}")
+                            return@launch
+                        }
+
+                        onSuccess(measuresList)
                     } else {
                         onFailure("No s'ha pogut obtenir el llistat de mesures. Codi de resposta: ${response.code()}")
                     }
@@ -407,6 +608,8 @@ class UserViewModel(apiService: ApiService) : ViewModel() {
                     onFailure("Error de connexió. Siusplau, comprova la teva connexió al servidor.")
                 } catch (e: HttpException) {
                     onFailure("Error al servidor. Siusplau, intenta-ho més tard.")
+                } catch (e: Exception) {
+                    onFailure("Error inesperat: ${e.message}")
                 }
             }
         } else {
@@ -426,9 +629,33 @@ class UserViewModel(apiService: ApiService) : ViewModel() {
         if (currentToken != null) {
             viewModelScope.launch {
                 try {
-                    val response = ApiClient.apiService.getMesura("Bearer $currentToken", id)
+                    val encryptedToken = try {
+                        CipherUtil.encrypt(currentToken)
+                    } catch (e: Exception) {
+                        onFailure("Error en xifrar el token: ${e.message}")
+                        return@launch
+                    }
+
+                    val response = ApiClient.apiService.getMesura("Bearer $encryptedToken", id)
+
                     if (response.isSuccessful && response.body() != null) {
-                        onSuccess(response.body()!!)
+                        val encryptedResponse = response.body()!!.string()
+
+                        val decryptedResponse = try {
+                            CipherUtil.decrypt(encryptedResponse)
+                        } catch (e: Exception) {
+                            onFailure("Error en desxifrar la resposta: ${e.message}")
+                            return@launch
+                        }
+
+                        val mesure = try {
+                            Gson().fromJson(decryptedResponse, Mesura::class.java)
+                        } catch (e: Exception) {
+                            onFailure("Error en parsejar la resposta desxifrada: ${e.message}")
+                            return@launch
+                        }
+
+                        onSuccess(mesure)
                     } else {
                         onFailure("No s'ha pogut obtenir la mesura. Codi de resposta: ${response.code()}")
                     }
@@ -436,6 +663,8 @@ class UserViewModel(apiService: ApiService) : ViewModel() {
                     onFailure("Error de connexió. Siusplau, comprova la teva connexió al servidor.")
                 } catch (e: HttpException) {
                     onFailure("Error al servidor. Siusplau, intenta-ho més tard.")
+                } catch (e: Exception) {
+                    onFailure("Error inesperat: ${e.message}")
                 }
             }
         } else {
@@ -455,7 +684,23 @@ class UserViewModel(apiService: ApiService) : ViewModel() {
         if (currentToken != null) {
             viewModelScope.launch {
                 try {
-                    val response = ApiClient.apiService.createMesura("Bearer $currentToken", mesura)
+                    val encryptedToken = try {
+                        CipherUtil.encrypt(currentToken)
+                    } catch (e: Exception) {
+                        onFailure("Error en xifrar el token: ${e.message}")
+                        return@launch
+                    }
+
+                    val mesuraJson = try {
+                        val json = Gson().toJson(mesura)
+                        CipherUtil.encrypt(json)
+                    } catch (e: Exception) {
+                        onFailure("Error en convertir o xifrar la mesura: ${e.message}")
+                        return@launch
+                    }
+
+                    val response = ApiClient.apiService.createMesura("Bearer $encryptedToken", mesuraJson)
+
                     if (response.isSuccessful) {
                         onSuccess()
                     } else {
@@ -465,6 +710,8 @@ class UserViewModel(apiService: ApiService) : ViewModel() {
                     onFailure("Error de connexió. Siusplau, comprova la teva connexió al servidor.")
                 } catch (e: HttpException) {
                     onFailure("Error al servidor. Siusplau, intenta-ho més tard.")
+                } catch (e: Exception) {
+                    onFailure("Error inesperat: ${e.message}")
                 }
             }
         } else {
@@ -485,7 +732,23 @@ class UserViewModel(apiService: ApiService) : ViewModel() {
         if (currentToken != null) {
             viewModelScope.launch {
                 try {
-                    val response = ApiClient.apiService.updateMesura("Bearer $currentToken", id, mesura)
+                    val encryptedToken = try {
+                        CipherUtil.encrypt(currentToken)
+                    } catch (e: Exception) {
+                        onFailure("Error en xifrar el token: ${e.message}")
+                        return@launch
+                    }
+
+                    val mesuraJson = try {
+                        val json = Gson().toJson(mesura)
+                        CipherUtil.encrypt(json)
+                    } catch (e: Exception) {
+                        onFailure("Error en convertir o xifrar la mesura: ${e.message}")
+                        return@launch
+                    }
+
+                    val response = ApiClient.apiService.updateMesura("Bearer $encryptedToken", id, mesuraJson)
+
                     if (response.isSuccessful) {
                         onSuccess()
                     } else {
@@ -495,6 +758,8 @@ class UserViewModel(apiService: ApiService) : ViewModel() {
                     onFailure("Error de connexió. Siusplau, comprova la teva connexió al servidor.")
                 } catch (e: HttpException) {
                     onFailure("Error al servidor. Siusplau, intenta-ho més tard.")
+                } catch (e: Exception) {
+                    onFailure("Error inesperat: ${e.message}")
                 }
             }
         } else {
@@ -514,7 +779,15 @@ class UserViewModel(apiService: ApiService) : ViewModel() {
         if (currentToken != null) {
             viewModelScope.launch {
                 try {
-                    val response = ApiClient.apiService.deleteMesura("Bearer $currentToken", id)
+                    val encryptedToken = try {
+                        CipherUtil.encrypt(currentToken)
+                    } catch (e: Exception) {
+                        onFailure("Error en xifrar el token: ${e.message}")
+                        return@launch
+                    }
+
+                    val response = ApiClient.apiService.deleteMesura("Bearer $encryptedToken", id)
+
                     if (response.isSuccessful) {
                         onSuccess()
                     } else {
@@ -524,6 +797,8 @@ class UserViewModel(apiService: ApiService) : ViewModel() {
                     onFailure("Error de connexió. Siusplau, comprova la teva connexió al servidor.")
                 } catch (e: HttpException) {
                     onFailure("Error al servidor. Siusplau, intenta-ho més tard.")
+                } catch (e: Exception) {
+                    onFailure("Error inesperat: ${e.message}")
                 }
             }
         } else {

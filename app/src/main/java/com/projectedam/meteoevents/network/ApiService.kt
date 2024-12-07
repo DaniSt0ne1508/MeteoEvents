@@ -153,7 +153,7 @@ interface ApiService {
     @GET("api/esdeveniments")
     suspend fun getEsdeveniments(
         @Header("Authorization") authToken: String
-    ): Response<List<Esdeveniment>>
+    ): Response<ResponseBody>
 
     /**
      * Mètode per obtenir el llistat de mesures de seguretat.
@@ -164,7 +164,7 @@ interface ApiService {
     @GET("api/mesures")
     suspend fun getMesures(
         @Header("Authorization") authToken: String
-    ): Response<List<Mesura>>
+    ): Response<ResponseBody>
 
     /**
      * Mètode per obtenir un esdeveniment per ID.
@@ -177,7 +177,7 @@ interface ApiService {
     suspend fun getEsdeveniment(
         @Header("Authorization") authToken: String,
         @Path("esdevenimentId") esdevenimentId: Int
-    ): Response<Esdeveniment>
+    ): Response<ResponseBody>
 
     /**
      * Mètode per obtenir una mesura de seguretat per ID.
@@ -190,7 +190,7 @@ interface ApiService {
     suspend fun getMesura(
         @Header("Authorization") authToken: String,
         @Path("mesuraId") mesuraId: Int
-    ): Response<Mesura>
+    ): Response<ResponseBody>
 
     /**
      * Mètode per actualitzar la informació d'un usuari.
@@ -213,8 +213,8 @@ interface ApiService {
     suspend fun updateUser(
         @Header("Authorization") authToken: String,
         @Path("userId") userId: String,
-        @Body user: User
-    ): Response<Unit>
+        @Body user: String
+    ): Response<ResponseBody>
 
     /**
      * Mètode per actualitzar un esdeveniment existent.
@@ -228,8 +228,8 @@ interface ApiService {
     suspend fun updateEsdeveniment(
         @Header("Authorization") authToken: String,
         @Path("esdevenimentId") esdevenimentId: Int,
-        @Body esdeveniment: Esdeveniment
-    ): Response<Unit>
+        @Body esdeveniment: String
+    ): Response<ResponseBody>
 
     /**
      * Mètode per actualitzar una mesura de seguretat existent.
@@ -243,8 +243,8 @@ interface ApiService {
     suspend fun updateMesura(
         @Header("Authorization") authToken: String,
         @Path("mesuraId") mesuraId: Int,
-        @Body mesura: Mesura
-    ): Response<Unit>
+        @Body mesura: String
+    ): Response<ResponseBody>
 
     /**
      * Mètode per eliminar un usuari.
@@ -257,7 +257,7 @@ interface ApiService {
     suspend fun deleteUser(
         @Header("Authorization") authToken: String,
         @Path("userId") userId: String
-    ): Response<Unit>
+    ): Response<ResponseBody>
 
     /**
      * Mètode per eliminar un esdeveniment.
@@ -270,7 +270,7 @@ interface ApiService {
     suspend fun deleteEsdeveniment(
         @Header("Authorization") authToken: String,
         @Path("esdevenimentId") esdevenimentId: Int
-    ): Response<Unit>
+    ): Response<ResponseBody>
 
     /**
      * Mètode per eliminar una mesura de seguretat.
@@ -283,13 +283,13 @@ interface ApiService {
     suspend fun deleteMesura(
         @Header("Authorization") authToken: String,
         @Path("mesuraId") mesuraId: Int
-    ): Response<Unit>
+    ): Response<ResponseBody>
 
     @POST("api/usuaris")
     suspend fun createUser(
         @Header("Authorization") authToken: String,
-        @Body user: User
-    ): Response<Unit>
+        @Body user: String
+    ): Response<ResponseBody>
 
     /**
      * Mètode per crear un nou esdeveniment.
@@ -301,8 +301,8 @@ interface ApiService {
     @POST("api/esdeveniments")
     suspend fun createEsdeveniment(
         @Header("Authorization") authToken: String,
-        @Body esdeveniment: Esdeveniment
-    ): Response<Unit>
+        @Body esdeveniment: String
+    ): Response<ResponseBody>
 
     /**
      * Mètode per crear una nova mesura de seguretat.
@@ -314,8 +314,8 @@ interface ApiService {
     @POST("api/mesures")
     suspend fun createMesura(
         @Header("Authorization") authToken: String,
-        @Body mesura: Mesura
-    ): Response<Unit>
+        @Body mesura: String
+    ): Response<ResponseBody>
 }
 
 
