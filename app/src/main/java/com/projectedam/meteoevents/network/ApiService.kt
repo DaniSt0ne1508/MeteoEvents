@@ -46,19 +46,17 @@ data class LoginResponse(
  * @param descripcio Descripció o bio de l'usuari.
  */
 data class User(
-    val id: String,
+    @SerializedName("id") val id: String,
     @SerializedName("nom_c") val nomC: String,
-    val nomUsuari: String,
-    val contrasenya: String,
-    val dataNaixement: String?,
-    val sexe: String,
-    val poblacio: String,
-    val email: String,
-    val telefon: String?,
-    val descripcio: String,
-    @SerializedName("funcional_id")val funcionalId: String,
-    val username: String,
-    val password: String
+    @SerializedName("nomUsuari") val nomUsuari: String,
+    @SerializedName("contrasenya") val contrasenya: String,
+    @SerializedName("data_naixement") val dataNaixement: String?,
+    @SerializedName("sexe") val sexe: String?,
+    @SerializedName("poblacio") val poblacio: String?,
+    @SerializedName("email") val email: String,
+    @SerializedName("telefon") val telefon: String?,
+    @SerializedName("descripcio") val descripcio: String?,
+    @SerializedName("funcional_id") val funcionalId: String
 )
 
 /**
@@ -80,10 +78,12 @@ data class Esdeveniment(
     val descripcio: String,
     val organitzador: String,
     val direccio: String,
-    val codiPostal: String,
+    @SerializedName("codi_postal") val codiPostal: String,
     val poblacio: String,
     val aforament: String,
-    val horari: String
+    val hora_inici: String,
+    val hora_fi: String,
+    @SerializedName("data_esde") val data_desde: String
 )
 
 /**
@@ -285,11 +285,11 @@ interface ApiService {
         @Path("mesuraId") mesuraId: Int
     ): Response<ResponseBody>
 
-    @POST("api/usuaris")
+    @POST("/api/usuaris")
     suspend fun createUser(
         @Header("Authorization") authToken: String,
         @Body user: String
-    ): Response<ResponseBody>
+    ): Response<Unit>
 
     /**
      * Mètode per crear un nou esdeveniment.

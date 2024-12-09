@@ -149,7 +149,9 @@ fun EsdevenimentsManagementScreen(
                         Text("Codi Postal: ${event.codiPostal}")
                         Text("Poblacio: ${event.poblacio}")
                         Text("Aforament: ${event.aforament}")
-                        Text("Horari: ${event.horari}")
+                        Text("Hora Inici: ${event.hora_inici}")
+                        Text("Hora Fi: ${event.hora_fi}")
+                        Text("Data: ${event.data_desde}")
                     }
                 },
                 confirmButton = {
@@ -173,7 +175,9 @@ fun EsdevenimentsManagementScreen(
                 direccio = "",
                 aforament = "",
                 codiPostal = "",
-                horari = "",
+                hora_inici = "",
+                hora_fi = "",
+                data_desde = "",
                 poblacio = ""
             ),
             onDismiss = { isCreateDialogOpen.value = false }
@@ -282,7 +286,9 @@ fun EditEventDialog(
     var codiPostal by remember { mutableStateOf(esdeveniment.codiPostal ?: "") }
     var poblacio by remember { mutableStateOf(esdeveniment.poblacio ?: "") }
     var aforament by remember { mutableStateOf(esdeveniment.aforament ?: "") }
-    var horari by remember { mutableStateOf(esdeveniment.horari ?: "") }
+    var horari by remember { mutableStateOf(esdeveniment.hora_inici ?: "") }
+    var horariFins by remember { mutableStateOf(esdeveniment.hora_fi ?: "") }
+    var data by remember { mutableStateOf(esdeveniment.data_desde ?: "") }
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -342,7 +348,7 @@ fun EditEventDialog(
                         codiPostal = codiPostal,
                         poblacio = poblacio,
                         aforament = aforament,
-                        horari = horari
+                        hora_inici = horari
                     )
                     onSave(updatedEsdeveniment)
                 }

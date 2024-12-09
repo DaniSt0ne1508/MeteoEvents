@@ -116,7 +116,7 @@ fun UserManagementScreen(
     }
     if (isCreateDialogOpen.value) {
         EditUserDialog(
-            user = User(id = "", nomC = "", nomUsuari = "", contrasenya = "", dataNaixement = "", sexe = "", poblacio = "", email = "", telefon = "", descripcio = "", funcionalId = "", username = "", password = ""),
+            user = User(id = "", nomC = "", nomUsuari = "", contrasenya = "", dataNaixement = "", sexe = "", poblacio = "", email = "", telefon = "", descripcio = "", funcionalId = ""),
             isAdmin = isAdmin,
             onDismiss = { isCreateDialogOpen.value = false }
         ) { newUser ->

@@ -27,7 +27,7 @@ class LoginTest {
         val mockResponse = LoginResponse("user", "dummyToken", "userFuncId")
         coEvery { mockApiService.login(any(), any()) } returns Response.success(mockResponse)
 
-        userViewModel = UserViewModel(mockApiService)
+        userViewModel = UserViewModel()
     }
 
     private fun coEvery(function: () -> Response<LoginResponse>): Any {

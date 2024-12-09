@@ -18,7 +18,7 @@ import java.io.IOException
 /**
  * Model de dades de l'usuari que gestiona l'estat del login i logout.
  */
-class UserViewModel(apiService: ApiService) : ViewModel() {
+class UserViewModel(private val apiService: ApiService) : ViewModel() {
     var token: String? = null
     var funcionalId: String? = null
     var currentUserName: String? = null
@@ -39,13 +39,27 @@ class UserViewModel(apiService: ApiService) : ViewModel() {
     ) {
         viewModelScope.launch {
             try {
-                val response = ApiClient.apiService.login(username, password)
+                val encryptedPassword = try {
+                    CipherUtil.encrypt(password)
+                } catch (e: Exception) {
+                    onFailure("Error al xifrar la contrasenya: ${e.message}")
+                    return@launch
+                }
+
+                val base64Password = android.util.Base64.encodeToString(
+                    encryptedPassword.toByteArray(Charsets.UTF_8),
+                    android.util.Base64.NO_WRAP
+                )
+
+                Log.d("Login", "Contrasenya xifrada i codificada en Base64: $base64Password")
+
+                val response = ApiClient.apiService.login(username, base64Password)
 
                 if (response.isSuccessful && response.body() != null) {
                     val encryptedResponse = response.body()!!.string()
 
                     val decryptedResponse = try {
-                        CipherUtil.decrypt(encryptedResponse) // Desencriptar string
+                        CipherUtil.decrypt(encryptedResponse)
                     } catch (e: Exception) {
                         onFailure("Error al desxifrar la resposta del servidor: ${e.message}")
                         return@launch
@@ -64,13 +78,13 @@ class UserViewModel(apiService: ApiService) : ViewModel() {
 
                     onSuccess(loginResponse.token, loginResponse.funcionalId)
                 } else {
-                    onFailure("Login fallit. Codi de resposta: ${response.code()}")
+                    onFailure("Error en l'inici de sessió. Codi de resposta: ${response.code()}")
                 }
             } catch (e: IOException) {
                 Log.e("Login", "Error de connexió: ${e.localizedMessage}")
-                onFailure("Error de connexió. Siusplau, comprova la teva connexió al servidor.")
+                onFailure("Error de connexió. Si us plau, comprova la teva connexió al servidor.")
             } catch (e: HttpException) {
-                onFailure("Error al servidor. Siusplau, intenta-ho més tard.")
+                onFailure("Error al servidor. Si us plau, intenta-ho més tard.")
             } catch (e: Exception) {
                 onFailure("Error inesperat: ${e.message}")
             }
@@ -269,31 +283,23 @@ class UserViewModel(apiService: ApiService) : ViewModel() {
      */
     fun createUser(user: User, onSuccess: () -> Unit, onFailure: (String) -> Unit) {
         val currentToken = token
+
         if (currentToken != null) {
             viewModelScope.launch {
                 try {
-                    val encryptedToken = try {
-                        CipherUtil.encrypt(currentToken)
-                    } catch (e: Exception) {
-                        onFailure("Error en xifrar el token: ${e.message}")
-                        return@launch
-                    }
+                    val encryptedToken = CipherUtil.encrypt(currentToken)
+                    val userJson = Gson().toJson(user)
+                    Log.d("User JSON", userJson)
 
-                    val encryptedUser = try {
-                        CipherUtil.encrypt(Gson().toJson(user))
-                    } catch (e: Exception) {
-                        onFailure("Error en xifrar l'usuari: ${e.message}")
-                        return@launch
-                    }
+                    val encryptedUserJson = CipherUtil.encrypt(userJson)
 
-                    val response = ApiClient.apiService.createUser(
+                    val response = apiService.createUser(
                         authToken = "Bearer $encryptedToken",
-                        user = encryptedUser
+                        user = encryptedUserJson
                     )
 
                     if (response.isSuccessful) {
                         onSuccess()
-                    } else {
                         onFailure("No s'ha pogut crear l'usuari. Codi de resposta: ${response.code()}")
                     }
                 } catch (e: IOException) {
