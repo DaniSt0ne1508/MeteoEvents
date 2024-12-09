@@ -1,7 +1,11 @@
 package com.projectedam.meteoevents.network
 
 import com.google.gson.annotations.SerializedName
+import okhttp3.Interceptor
+import okhttp3.OkHttpClient
+import okhttp3.RequestBody
 import okhttp3.ResponseBody
+import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.http.POST
 import retrofit2.Response
 import retrofit2.Retrofit
@@ -213,7 +217,7 @@ interface ApiService {
     suspend fun updateUser(
         @Header("Authorization") authToken: String,
         @Path("userId") userId: String,
-        @Body user: String
+        @Body user: RequestBody
     ): Response<ResponseBody>
 
     /**
@@ -228,7 +232,7 @@ interface ApiService {
     suspend fun updateEsdeveniment(
         @Header("Authorization") authToken: String,
         @Path("esdevenimentId") esdevenimentId: Int,
-        @Body esdeveniment: String
+        @Body esdeveniment: RequestBody
     ): Response<ResponseBody>
 
     /**
@@ -243,7 +247,7 @@ interface ApiService {
     suspend fun updateMesura(
         @Header("Authorization") authToken: String,
         @Path("mesuraId") mesuraId: Int,
-        @Body mesura: String
+        @Body mesura: RequestBody
     ): Response<ResponseBody>
 
     /**
@@ -288,8 +292,8 @@ interface ApiService {
     @POST("/api/usuaris")
     suspend fun createUser(
         @Header("Authorization") authToken: String,
-        @Body user: String
-    ): Response<Unit>
+        @Body user: RequestBody
+    ): Response<ResponseBody>
 
     /**
      * Mètode per crear un nou esdeveniment.
@@ -301,7 +305,7 @@ interface ApiService {
     @POST("api/esdeveniments")
     suspend fun createEsdeveniment(
         @Header("Authorization") authToken: String,
-        @Body esdeveniment: String
+        @Body esdeveniment: RequestBody
     ): Response<ResponseBody>
 
     /**
@@ -314,7 +318,7 @@ interface ApiService {
     @POST("api/mesures")
     suspend fun createMesura(
         @Header("Authorization") authToken: String,
-        @Body mesura: String
+        @Body mesura: RequestBody
     ): Response<ResponseBody>
 }
 
@@ -327,14 +331,34 @@ interface ApiService {
 object ApiClient {
     private const val BASE_URL = "http://10.0.2.2:8080/"
 
+    private val logging = HttpLoggingInterceptor().apply {
+        level = HttpLoggingInterceptor.Level.BODY
+    }
+
+    private val contentTypeInterceptor = Interceptor { chain ->
+        val originalRequest = chain.request()
+
+        val requestWithContentType = originalRequest.newBuilder()
+            .addHeader("Content-Type", "application/json")
+            .build()
+
+        chain.proceed(requestWithContentType)
+    }
+
+    private val httpClient = OkHttpClient.Builder()
+        .addInterceptor(logging)
+        .addInterceptor(contentTypeInterceptor)
+        .build()
+
     val apiService: ApiService by lazy {
         Retrofit.Builder()
             .baseUrl(BASE_URL)
-            .addConverterFactory(GsonConverterFactory.create())
+            .client(httpClient)
             .build()
             .create(ApiService::class.java)
     }
 }
+
 
 
 

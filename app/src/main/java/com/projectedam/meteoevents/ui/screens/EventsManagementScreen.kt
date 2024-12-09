@@ -205,7 +205,7 @@ fun EsdevenimentsManagementScreen(
             val esdevenimentId = updatedEsdeveniment.id
             if (esdevenimentId != null) {
                 userViewModel.updateEvent(
-                    id = esdevenimentId,
+                    esdevenimentId = esdevenimentId,
                     esdeveniment = updatedEsdeveniment,
                     onSuccess = {
                         esdevenimentsList.value = esdevenimentsList.value.map {

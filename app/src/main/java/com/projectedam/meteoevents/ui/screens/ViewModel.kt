@@ -12,6 +12,8 @@ import com.projectedam.meteoevents.network.LoginResponse
 import com.projectedam.meteoevents.network.Mesura
 import com.projectedam.meteoevents.network.User
 import kotlinx.coroutines.launch
+import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.RequestBody.Companion.toRequestBody
 import retrofit2.HttpException
 import java.io.IOException
 
@@ -203,9 +205,10 @@ class UserViewModel(private val apiService: ApiService) : ViewModel() {
                         return@launch
                     }
 
-                    val encryptedUser = try {
+                    val requestBody = try {
                         val userJson = Gson().toJson(user)
-                        CipherUtil.encrypt(userJson)
+                        val encryptedUserJson = CipherUtil.encrypt(userJson)
+                        encryptedUserJson.toRequestBody("application/json; charset=utf-8".toMediaType())
                     } catch (e: Exception) {
                         onFailure("Error en xifrar les dades de l'usuari: ${e.message}")
                         return@launch
@@ -214,7 +217,7 @@ class UserViewModel(private val apiService: ApiService) : ViewModel() {
                     val response = ApiClient.apiService.updateUser(
                         authToken = "Bearer $encryptedToken",
                         userId = user.id,
-                        user = encryptedUser
+                        user = requestBody
                     )
 
                     if (response.isSuccessful) {
@@ -289,17 +292,20 @@ class UserViewModel(private val apiService: ApiService) : ViewModel() {
                 try {
                     val encryptedToken = CipherUtil.encrypt(currentToken)
                     val userJson = Gson().toJson(user)
-                    Log.d("User JSON", userJson)
 
+                    Log.d("User JSON", userJson)
                     val encryptedUserJson = CipherUtil.encrypt(userJson)
+
+                    val requestBody = encryptedUserJson.toRequestBody("application/json; charset=utf-8".toMediaType())
 
                     val response = apiService.createUser(
                         authToken = "Bearer $encryptedToken",
-                        user = encryptedUserJson
+                        user = requestBody
                     )
 
                     if (response.isSuccessful) {
                         onSuccess()
+                    } else {
                         onFailure("No s'ha pogut crear l'usuari. Codi de resposta: ${response.code()}")
                     }
                 } catch (e: IOException) {
@@ -447,17 +453,18 @@ class UserViewModel(private val apiService: ApiService) : ViewModel() {
                         return@launch
                     }
 
-                    val encryptedEsdeveniment = try {
-                        val json = Gson().toJson(esdeveniment)
-                        CipherUtil.encrypt(json)
+                    val requestBody = try {
+                        val esdevenimentJson = Gson().toJson(esdeveniment)
+                        val encryptedEsdeveniment = CipherUtil.encrypt(esdevenimentJson)
+                        encryptedEsdeveniment.toRequestBody("application/json; charset=utf-8".toMediaType())
                     } catch (e: Exception) {
                         onFailure("Error al encriptar l'esdeveniment: ${e.message}")
                         return@launch
                     }
 
                     val response = ApiClient.apiService.createEsdeveniment(
-                        "Bearer $encryptedToken",
-                        encryptedEsdeveniment
+                        authToken = "Bearer $encryptedToken",
+                        esdeveniment = requestBody
                     )
 
                     if (response.isSuccessful) {
@@ -469,6 +476,8 @@ class UserViewModel(private val apiService: ApiService) : ViewModel() {
                     onFailure("Error de connexió. Siusplau, comprova la teva connexió al servidor.")
                 } catch (e: HttpException) {
                     onFailure("Error al servidor. Siusplau, intenta-ho més tard.")
+                } catch (e: Exception) {
+                    onFailure("Error inesperat: ${e.message}")
                 }
             }
         } else {
@@ -485,7 +494,7 @@ class UserViewModel(private val apiService: ApiService) : ViewModel() {
      * @param onFailure Funció que s'executa en cas d'error durant l'actualització.
      */
     fun updateEvent(
-        id: Int,
+        esdevenimentId: Int,
         esdeveniment: Esdeveniment,
         onSuccess: () -> Unit,
         onFailure: (String) -> Unit
@@ -501,18 +510,19 @@ class UserViewModel(private val apiService: ApiService) : ViewModel() {
                         return@launch
                     }
 
-                    val encryptedEsdeveniment = try {
-                        val json = Gson().toJson(esdeveniment)
-                        CipherUtil.encrypt(json)
+                    val requestBody = try {
+                        val esdevenimentJson = Gson().toJson(esdeveniment)
+                        val encryptedEsdeveniment = CipherUtil.encrypt(esdevenimentJson)
+                        encryptedEsdeveniment.toRequestBody("application/json; charset=utf-8".toMediaType())
                     } catch (e: Exception) {
                         onFailure("Error al encriptar l'esdeveniment: ${e.message}")
                         return@launch
                     }
 
                     val response = ApiClient.apiService.updateEsdeveniment(
-                        "Bearer $encryptedToken",
-                        id,
-                        encryptedEsdeveniment
+                        authToken = "Bearer $encryptedToken",
+                        esdevenimentId = esdevenimentId,
+                        esdeveniment = requestBody
                     )
 
                     if (response.isSuccessful) {
@@ -524,6 +534,8 @@ class UserViewModel(private val apiService: ApiService) : ViewModel() {
                     onFailure("Error de connexió. Siusplau, comprova la teva connexió al servidor.")
                 } catch (e: HttpException) {
                     onFailure("Error al servidor. Siusplau, intenta-ho més tard.")
+                } catch (e: Exception) {
+                    onFailure("Error inesperat: ${e.message}")
                 }
             }
         } else {
@@ -697,15 +709,19 @@ class UserViewModel(private val apiService: ApiService) : ViewModel() {
                         return@launch
                     }
 
-                    val mesuraJson = try {
-                        val json = Gson().toJson(mesura)
-                        CipherUtil.encrypt(json)
+                    val requestBody = try {
+                        val mesuraJson = Gson().toJson(mesura)
+                        val encryptedMesura = CipherUtil.encrypt(mesuraJson)
+                        encryptedMesura.toRequestBody("application/json; charset=utf-8".toMediaType())
                     } catch (e: Exception) {
                         onFailure("Error en convertir o xifrar la mesura: ${e.message}")
                         return@launch
                     }
 
-                    val response = ApiClient.apiService.createMesura("Bearer $encryptedToken", mesuraJson)
+                    val response = ApiClient.apiService.createMesura(
+                        authToken = "Bearer $encryptedToken",
+                        mesura = requestBody
+                    )
 
                     if (response.isSuccessful) {
                         onSuccess()
@@ -733,7 +749,7 @@ class UserViewModel(private val apiService: ApiService) : ViewModel() {
      * @param onSuccess Funció que s'executa quan l'actualització és exitosa.
      * @param onFailure Funció que s'executa en cas d'error durant l'actualització.
      */
-    fun updateMesura(id: Int, mesura: Mesura, onSuccess: () -> Unit, onFailure: (String) -> Unit) {
+    fun updateMesura(mesuraId: Int, mesura: Mesura, onSuccess: () -> Unit, onFailure: (String) -> Unit) {
         val currentToken = token
         if (currentToken != null) {
             viewModelScope.launch {
@@ -745,15 +761,20 @@ class UserViewModel(private val apiService: ApiService) : ViewModel() {
                         return@launch
                     }
 
-                    val mesuraJson = try {
-                        val json = Gson().toJson(mesura)
-                        CipherUtil.encrypt(json)
+                    val requestBody = try {
+                        val mesuraJson = Gson().toJson(mesura)
+                        val encryptedMesura = CipherUtil.encrypt(mesuraJson)
+                        encryptedMesura.toRequestBody("application/json; charset=utf-8".toMediaType())
                     } catch (e: Exception) {
                         onFailure("Error en convertir o xifrar la mesura: ${e.message}")
                         return@launch
                     }
 
-                    val response = ApiClient.apiService.updateMesura("Bearer $encryptedToken", id, mesuraJson)
+                    val response = ApiClient.apiService.updateMesura(
+                        authToken = "Bearer $encryptedToken",
+                        mesuraId = mesuraId,
+                        mesura = requestBody
+                    )
 
                     if (response.isSuccessful) {
                         onSuccess()

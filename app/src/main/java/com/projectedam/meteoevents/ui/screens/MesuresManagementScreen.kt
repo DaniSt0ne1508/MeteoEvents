@@ -194,7 +194,7 @@ fun MesuresSeguretatManagementScreen(
             val mesuraId = updatedMesura.id
             if (mesuraId != null) {
                 userViewModel.updateMesura(
-                    id = mesuraId,
+                    mesuraId = mesuraId,
                     mesura = updatedMesura,
                     onSuccess = {
                         mesuresList.value = mesuresList.value.map {
