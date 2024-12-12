@@ -9,7 +9,6 @@ import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.http.POST
 import retrofit2.Response
 import retrofit2.Retrofit
-import retrofit2.converter.gson.GsonConverterFactory
 import retrofit2.http.Body
 import retrofit2.http.DELETE
 import retrofit2.http.Field
@@ -87,7 +86,7 @@ data class Esdeveniment(
     val aforament: String,
     val hora_inici: String,
     val hora_fi: String,
-    @SerializedName("data_esde") val data_desde: String
+    @SerializedName("data_esde") val data_esde: String
 )
 
 /**
@@ -104,7 +103,36 @@ data class Mesura(
     val condicio: String,
     val valor: Double,
     val valorUm: String,
-    val accio: String
+    val accio: String,
+    val nivell_mesura: Int
+)
+
+data class MeteoResponse(
+    @SerializedName("Usuaris participants") val usuarisParticipants: List<String>,
+    @SerializedName("dataHora") val dataHora: MeteoDetails
+)
+
+data class MeteoDetails(
+    @SerializedName("VelocitatMitjaVent") val velocitatMitjaVent: Int,
+    @SerializedName("AlertaVentMitja") val alertaVentMitja: Int,
+    @SerializedName("MesuresVent") val mesuresVent: MesuresVent?,
+    @SerializedName("RatxaMaximaVent") val ratxaMaximaVent: Int,
+    @SerializedName("AlertaRatxaMaxima") val alertaRatxaMaxima: Int,
+    @SerializedName("ProbabilitatPluja") val probabilitatPluja: Int,
+    @SerializedName("Precipitacio") val precipitacio: Double,
+    @SerializedName("AlertaPluja") val alertaPluja: Int,
+    @SerializedName("ProbabilitatTempesta") val probabilitatTempesta: Int,
+    @SerializedName("Neu") val neu: Double,
+    @SerializedName("AlertaNeu") val alertaNeu: Int,
+    @SerializedName("ProbabilitatNevada") val probabilitatNevada: Int,
+    @SerializedName("Temperatura") val temperatura: Double,
+    @SerializedName("AlertaAltaTemperatura") val alertaAltaTemperatura: Int,
+    @SerializedName("AlertaBaixaTemperatura") val alertaBaixaTemperatura: Int,
+    @SerializedName("HumitatRelativa") val humitatRelativa: Int
+)
+
+data class MesuresVent(
+    @SerializedName("Accio1") val accio1: String?
 )
 
 
@@ -319,6 +347,32 @@ interface ApiService {
     suspend fun createMesura(
         @Header("Authorization") authToken: String,
         @Body mesura: RequestBody
+    ): Response<ResponseBody>
+
+    /**
+     * Mètode per obtenir els usuaris assignats a un esdeveniment.
+     *
+     * @param authToken Token d'autenticació encriptat.
+     * @param esdevenimentId ID de l'esdeveniment.
+     * @return Resposta HTTP amb la llista d'usuaris encriptada.
+     */
+    @GET("api/esdeveniments/{esdevenimentId}/usuaris")
+    suspend fun getUsersByEvent(
+        @Header("Authorization") authToken: String,
+        @Path("esdevenimentId") esdevenimentId: Int
+    ): Response<ResponseBody>
+
+    /**
+     * Mètode per obtenir la previsió meteorològica d'un esdeveniment.
+     *
+     * @param authToken Token d'autenticació de l'usuari.
+     * @param esdevenimentId ID de l'esdeveniment.
+     * @return Resposta amb la previsió meteorològica.
+     */
+    @GET("api/esdeveniments/{esdevenimentId}/meteo")
+    suspend fun getMeteo(
+        @Header("Authorization") authToken: String,
+        @Path("esdevenimentId") esdevenimentId: Int
     ): Response<ResponseBody>
 }
 

@@ -4,12 +4,16 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.gson.Gson
+import com.google.gson.JsonObject
+import com.google.gson.reflect.TypeToken
 import com.projectedam.meteoevents.network.ApiClient
 import com.projectedam.meteoevents.network.ApiService
 import com.projectedam.meteoevents.network.CipherUtil
 import com.projectedam.meteoevents.network.Esdeveniment
 import com.projectedam.meteoevents.network.LoginResponse
 import com.projectedam.meteoevents.network.Mesura
+import com.projectedam.meteoevents.network.MeteoDetails
+import com.projectedam.meteoevents.network.MeteoResponse
 import com.projectedam.meteoevents.network.User
 import kotlinx.coroutines.launch
 import okhttp3.MediaType.Companion.toMediaType
@@ -41,8 +45,12 @@ class UserViewModel(private val apiService: ApiService) : ViewModel() {
     ) {
         viewModelScope.launch {
             try {
+                val timestamp = java.time.Instant.now().toString()
+
+                val passwordWithTimestamp = "$password|$timestamp"
+
                 val encryptedPassword = try {
-                    CipherUtil.encrypt(password)
+                    CipherUtil.encrypt(passwordWithTimestamp)
                 } catch (e: Exception) {
                     onFailure("Error al xifrar la contrasenya: ${e.message}")
                     return@launch
@@ -53,9 +61,22 @@ class UserViewModel(private val apiService: ApiService) : ViewModel() {
                     android.util.Base64.NO_WRAP
                 )
 
+                val encryptedUsername = try {
+                    CipherUtil.encrypt(username)
+                } catch (e: Exception) {
+                    onFailure("Error al xifrar el nom d'usuari: ${e.message}")
+                    return@launch
+                }
+
+                val base64Username = android.util.Base64.encodeToString(
+                    encryptedUsername.toByteArray(Charsets.UTF_8),
+                    android.util.Base64.NO_WRAP
+                )
+
+                Log.d("Login", "Nom d'usuari xifrat i codificat en Base64: $base64Username")
                 Log.d("Login", "Contrasenya xifrada i codificada en Base64: $base64Password")
 
-                val response = ApiClient.apiService.login(username, base64Password)
+                val response = ApiClient.apiService.login(base64Username, base64Password)
 
                 if (response.isSuccessful && response.body() != null) {
                     val encryptedResponse = response.body()!!.string()
@@ -296,7 +317,8 @@ class UserViewModel(private val apiService: ApiService) : ViewModel() {
                     Log.d("User JSON", userJson)
                     val encryptedUserJson = CipherUtil.encrypt(userJson)
 
-                    val requestBody = encryptedUserJson.toRequestBody("application/json; charset=utf-8".toMediaType())
+                    val requestBody =
+                        encryptedUserJson.toRequestBody("application/json; charset=utf-8".toMediaType())
 
                     val response = apiService.createUser(
                         authToken = "Bearer $encryptedToken",
@@ -408,8 +430,12 @@ class UserViewModel(private val apiService: ApiService) : ViewModel() {
                             return@launch
                         }
 
+                        //Implementat amb IA amb prompt: "Parseo de JSON en Kotlin: extraer un objeto 'body' de la respuesta descifrada y mapearlo usando Gson."
                         val event = try {
-                            Gson().fromJson(decryptedResponse, Esdeveniment::class.java)
+                            val jsonObject =
+                                Gson().fromJson(decryptedResponse, JsonObject::class.java)
+                            val bodyJson = jsonObject.getAsJsonObject("body")
+                            Gson().fromJson(bodyJson, Esdeveniment::class.java)
                         } catch (e: Exception) {
                             onFailure("Error al parsejar la resposta descifrada: ${e.message}")
                             return@launch
@@ -423,6 +449,8 @@ class UserViewModel(private val apiService: ApiService) : ViewModel() {
                     onFailure("Error de connexió. Siusplau, comprova la teva connexió al servidor.")
                 } catch (e: HttpException) {
                     onFailure("Error al servidor. Siusplau, intenta-ho més tard.")
+                } catch (e: Exception) {
+                    onFailure("Error inesperat: ${e.message}")
                 }
             }
         } else {
@@ -667,7 +695,10 @@ class UserViewModel(private val apiService: ApiService) : ViewModel() {
                         }
 
                         val mesure = try {
-                            Gson().fromJson(decryptedResponse, Mesura::class.java)
+                            val jsonObject =
+                                Gson().fromJson(decryptedResponse, JsonObject::class.java)
+                            val bodyJson = jsonObject.getAsJsonObject("body")
+                            Gson().fromJson(bodyJson, Mesura::class.java)
                         } catch (e: Exception) {
                             onFailure("Error en parsejar la resposta desxifrada: ${e.message}")
                             return@launch
@@ -749,7 +780,12 @@ class UserViewModel(private val apiService: ApiService) : ViewModel() {
      * @param onSuccess Funció que s'executa quan l'actualització és exitosa.
      * @param onFailure Funció que s'executa en cas d'error durant l'actualització.
      */
-    fun updateMesura(mesuraId: Int, mesura: Mesura, onSuccess: () -> Unit, onFailure: (String) -> Unit) {
+    fun updateMesura(
+        mesuraId: Int,
+        mesura: Mesura,
+        onSuccess: () -> Unit,
+        onFailure: (String) -> Unit
+    ) {
         val currentToken = token
         if (currentToken != null) {
             viewModelScope.launch {
@@ -830,6 +866,133 @@ class UserViewModel(private val apiService: ApiService) : ViewModel() {
             }
         } else {
             onFailure("Token no vàlid, no es pot eliminar la mesura.")
+        }
+    }
+
+    /**
+     * Mètode per obtenir la llista d'usuaris assignats a un esdeveniment.
+     *
+     * @param eventId ID de l'esdeveniment.
+     * @param onSuccess Funció que s'executa amb la llista d'usuaris obtinguda.
+     * @param onFailure Funció que s'executa en cas d'error durant l'obtenció.
+     */
+    fun getUsersEvents(
+        eventId: Int,
+        onSuccess: (List<User>) -> Unit,
+        onFailure: (String) -> Unit
+    ) {
+        val currentToken = token
+        if (currentToken != null) {
+            viewModelScope.launch {
+                try {
+                    val encryptedToken = try {
+                        CipherUtil.encrypt(currentToken)
+                    } catch (e: Exception) {
+                        onFailure("Error al encriptar el token: ${e.message}")
+                        return@launch
+                    }
+
+                    val response =
+                        ApiClient.apiService.getUsersByEvent("Bearer $encryptedToken", eventId)
+
+                    if (response.isSuccessful && response.body() != null) {
+                        val encryptedResponse = response.body()!!.string()
+
+                        val decryptedResponse = try {
+                            CipherUtil.decrypt(encryptedResponse)
+                        } catch (e: Exception) {
+                            onFailure("Error al desxifrar la resposta: ${e.message}")
+                            return@launch
+                        }
+
+                        val usersList = try {
+                            Gson().fromJson(decryptedResponse, Array<User>::class.java).toList()
+                        } catch (e: Exception) {
+                            onFailure("Error al parsejar la resposta desxifrada: ${e.message}")
+                            return@launch
+                        }
+
+                        onSuccess(usersList)
+                    } else {
+                        onFailure("No s'han pogut obtenir els usuaris. Codi de resposta: ${response.code()}")
+                    }
+                } catch (e: IOException) {
+                    onFailure("Error de connexió. Si us plau, comprova la teva connexió al servidor.")
+                } catch (e: HttpException) {
+                    onFailure("Error al servidor. Si us plau, intenta-ho més tard.")
+                } catch (e: Exception) {
+                    onFailure("Error inesperat: ${e.message}")
+                }
+            }
+        } else {
+            onFailure("Token no vàlid, no es pot obtenir els usuaris.")
+        }
+    }
+
+    fun getMeteo(
+        eventId: Int,
+        onSuccess: (List<String>, MeteoDetails) -> Unit,
+        onFailure: (String) -> Unit
+    ) {
+        val currentToken = token
+        if (currentToken != null) {
+            viewModelScope.launch {
+                try {
+                    val encryptedToken = try {
+                        CipherUtil.encrypt(currentToken)
+                    } catch (e: Exception) {
+                        onFailure("Error al encriptar el token: ${e.message}")
+                        return@launch
+                    }
+
+                    val response = ApiClient.apiService.getMeteo("Bearer $encryptedToken", eventId)
+
+                    if (response.isSuccessful && response.body() != null) {
+                        val encryptedResponse = response.body()!!.string()
+
+                        val decryptedResponse = try {
+                            CipherUtil.decrypt(encryptedResponse)
+                        } catch (e: Exception) {
+                            onFailure("Error al desxifrar la resposta: ${e.message}")
+                            return@launch
+                        }
+
+                        println("Resposta desencriptada: $decryptedResponse")
+
+                        try {
+                            if (decryptedResponse.contains("No s'ha pogut generar el JSON")) {
+                                onFailure("El servidor no pudo generar los datos meteorológicos.")
+                            } else {
+                                val meteoResponse =
+                                    Gson().fromJson(decryptedResponse, MeteoResponse::class.java)
+
+                                val usuariosList = meteoResponse.usuarisParticipants
+                                val meteoData = meteoResponse.dataHora
+
+                                onSuccess(usuariosList, meteoData)
+                            }
+                        } catch (e: Exception) {
+                            onFailure("Error al parsejar la resposta desxifrada: ${e.message}")
+                            println("Contenido de la respuesta que no se puede parsear: $decryptedResponse")
+                        }
+                    } else {
+                        when (response.code()) {
+                            401 -> onFailure("Token invàlid o inactiu.")
+                            404 -> onFailure("Token no proporcionat.")
+                            500 -> onFailure("Error intern al servidor.")
+                            else -> onFailure("Error al obtenir les dades meteorològiques: ${response.code()}")
+                        }
+                    }
+                } catch (e: IOException) {
+                    onFailure("Error de connexió. Si us plau, comprova la teva connexió al servidor.")
+                } catch (e: HttpException) {
+                    onFailure("Error al servidor. Si us plau, intenta-ho més tard.")
+                } catch (e: Exception) {
+                    onFailure("Error inesperat: ${e.message}")
+                }
+            }
+        } else {
+            onFailure("Token no vàlid, no es pot obtenir la informació meteorològica.")
         }
     }
 }

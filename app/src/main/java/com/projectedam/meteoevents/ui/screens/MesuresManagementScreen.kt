@@ -147,6 +147,7 @@ fun MesuresSeguretatManagementScreen(
                         Text("Valor: ${mesura.valor}")
                         Text("ValorUm: ${mesura.valorUm}")
                         Text("Acció: ${mesura.accio}")
+                        Text("Nivell: ${mesura.nivell_mesura}")
                     }
                 },
                 confirmButton = {
@@ -167,7 +168,8 @@ fun MesuresSeguretatManagementScreen(
                 condicio = "",
                 valor = 0.0,
                 valorUm = "",
-                accio = ""
+                accio = "",
+                nivell_mesura = 0,
             ),
             onDismiss = { isCreateDialogOpen.value = false }
         ) { newMesura ->
@@ -229,6 +231,7 @@ fun MesuraSeguretatItem(mesura: Mesura, onEditClick: () -> Unit, onDeleteClick: 
             Text("Valor: ${mesura.valor}")
             Text("ValorUm: ${mesura.valorUm}")
             Text("Acció: ${mesura.accio}")
+            Text("Nivell: ${mesura.nivell_mesura}")
             Button(
                 onClick = { onViewClick(mesura.id!!) },
                 colors = ButtonDefaults.buttonColors(MaterialTheme.colorScheme.primary)
@@ -272,6 +275,7 @@ fun EditMesuraDialog(
     var valor by remember { mutableStateOf(mesura.valor) }
     var valorUm by remember { mutableStateOf(mesura.valorUm) }
     var accio by remember { mutableStateOf(mesura.accio) }
+    var nivell by remember { mutableStateOf(mesura.nivell_mesura) }
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -302,6 +306,14 @@ fun EditMesuraDialog(
                     onValueChange = { accio = it },
                     label = { Text("Acció") }
                 )
+                TextField(
+                    value = nivell.toString(),
+                    onValueChange = { input ->
+                        nivell = input.toIntOrNull() ?: 0
+                    },
+                    label = { Text("Nivell") },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+                )
             }
         },
         confirmButton = {
@@ -311,7 +323,8 @@ fun EditMesuraDialog(
                         condicio = condicio,
                         valor = valor,
                         valorUm = valorUm,
-                        accio = accio
+                        accio = accio,
+                        nivell_mesura = nivell
                     )
                     onSave(updatedMesura)
                 }

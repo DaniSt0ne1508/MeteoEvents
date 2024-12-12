@@ -76,7 +76,9 @@ fun UserManagementScreen(
         if (isAdmin) {
             Button(
                 onClick = { isCreateDialogOpen.value = true },
-                modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp)
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 16.dp)
             ) {
                 Text("Crear Usuari")
             }
@@ -166,7 +168,9 @@ fun UserManagementScreen(
  */
 @Composable
 fun UserItem(user: User, onEditClick: () -> Unit, onDeleteClick: () -> Unit, isAdmin: Boolean) {
-    Card(modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
+    Card(modifier = Modifier
+        .fillMaxWidth()
+        .padding(vertical = 4.dp)) {
         Column(modifier = Modifier.padding(16.dp)) {
             Text("Nom: ${user.nomC}", fontWeight = FontWeight.Bold)
             Text("Usuari: ${user.nomUsuari}")

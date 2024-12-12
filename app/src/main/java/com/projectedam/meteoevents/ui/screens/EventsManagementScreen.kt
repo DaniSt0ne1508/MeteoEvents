@@ -18,6 +18,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.projectedam.meteoevents.network.Esdeveniment
+import com.projectedam.meteoevents.network.User
 
 /**
  * Pantalla de gestió d'esdeveniments.
@@ -40,6 +41,24 @@ fun EsdevenimentsManagementScreen(
     val esdevenimentToEdit = remember { mutableStateOf<Esdeveniment?>(null) }
     val isAdmin = userViewModel.funcionalId == "ADM"
     val eventToView = remember { mutableStateOf<Esdeveniment?>(null) }
+    val usersForEvent = remember { mutableStateOf<List<User>?>(null) }
+    val isUsersDialogOpen = remember { mutableStateOf(false) }
+    val userErrorMessage = remember { mutableStateOf<String?>(null) }
+
+    val onViewUsers: (Int) -> Unit = { eventId ->
+        userViewModel.getUsersEvents(
+            eventId = eventId,
+            onSuccess = { users ->
+                usersForEvent.value = users
+                isUsersDialogOpen.value = true
+            },
+            onFailure = { error ->
+                userErrorMessage.value = error
+                isUsersDialogOpen.value = true
+            }
+        )
+    }
+
 
     LaunchedEffect(Unit) {
         isLoading.value = true
@@ -130,7 +149,8 @@ fun EsdevenimentsManagementScreen(
                                 onFailure = { error -> errorMessage.value = error }
                             )
                         },
-                        onViewClick = onViewEvent
+                        onViewClick = onViewEvent,
+                        onViewUsersClick = onViewUsers
                     )
                 }
             }
@@ -151,7 +171,7 @@ fun EsdevenimentsManagementScreen(
                         Text("Aforament: ${event.aforament}")
                         Text("Hora Inici: ${event.hora_inici}")
                         Text("Hora Fi: ${event.hora_fi}")
-                        Text("Data: ${event.data_desde}")
+                        Text("Data: ${event.data_esde}")
                     }
                 },
                 confirmButton = {
@@ -163,6 +183,34 @@ fun EsdevenimentsManagementScreen(
                 }
             )
         }
+    }
+
+    if (isUsersDialogOpen.value) {
+        AlertDialog(
+            onDismissRequest = { isUsersDialogOpen.value = false },
+            title = { Text("Usuaris de l'Esdeveniment") },
+            text = {
+                usersForEvent.value?.let { users ->
+                    LazyColumn {
+                        items(users) { user ->
+                            Column(modifier = Modifier.padding(vertical = 4.dp)) {
+                                Text(
+                                    text = "Nom: ${user.nomC}"
+                                )
+                                Text(
+                                    text = "Email: ${user.email}"
+                                )
+                            }
+                        }
+                    }
+                } ?: Text(userErrorMessage.value ?: "No s'han pogut obtenir els usuaris.")
+            },
+            confirmButton = {
+                Button(onClick = { isUsersDialogOpen.value = false }) {
+                    Text("Tancar")
+                }
+            }
+        )
     }
 
     if (isCreateDialogOpen.value) {
@@ -177,7 +225,7 @@ fun EsdevenimentsManagementScreen(
                 codiPostal = "",
                 hora_inici = "",
                 hora_fi = "",
-                data_desde = "",
+                data_esde = "",
                 poblacio = ""
             ),
             onDismiss = { isCreateDialogOpen.value = false }
@@ -233,18 +281,32 @@ fun EsdevenimentsManagementScreen(
  * @param onDeleteClick Callback per a eliminar l'esdeveniment.
  */
 @Composable
-fun EsdevenimentItem(esdeveniment: Esdeveniment, onEditClick: () -> Unit, onDeleteClick: () -> Unit, isAdmin: Boolean, onViewClick: (Int) -> Unit) {
+fun EsdevenimentItem(
+    esdeveniment: Esdeveniment,
+    onEditClick: () -> Unit,
+    onDeleteClick: () -> Unit,
+    isAdmin: Boolean,
+    onViewClick: (Int) -> Unit,
+    onViewUsersClick: (Int) -> Unit
+) {
     Card(modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
         Column(modifier = Modifier.padding(16.dp)) {
             Text("Nom: ${esdeveniment.nom}", fontWeight = FontWeight.Bold)
             Text("Descripció: ${esdeveniment.descripcio}")
             Text("Organitzador:: ${esdeveniment.organitzador}")
             Text("Direccio: ${esdeveniment.direccio}")
+            Text("Data: ${esdeveniment.data_esde}")
             Button(
                 onClick = { onViewClick(esdeveniment.id!!) },
                 colors = ButtonDefaults.buttonColors(MaterialTheme.colorScheme.primary)
             ) {
                 Text("Veure")
+            }
+            Button(
+                onClick = { onViewUsersClick(esdeveniment.id!!) }, // Nuevo botón
+                colors = ButtonDefaults.buttonColors(MaterialTheme.colorScheme.secondary)
+            ) {
+                Text("Usuaris")
             }
             if(isAdmin) {
                 Row(
@@ -288,7 +350,7 @@ fun EditEventDialog(
     var aforament by remember { mutableStateOf(esdeveniment.aforament ?: "") }
     var horari by remember { mutableStateOf(esdeveniment.hora_inici ?: "") }
     var horariFins by remember { mutableStateOf(esdeveniment.hora_fi ?: "") }
-    var data by remember { mutableStateOf(esdeveniment.data_desde ?: "") }
+    var data by remember { mutableStateOf(esdeveniment.data_esde ?: "") }
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -333,7 +395,17 @@ fun EditEventDialog(
                 TextField(
                     value = horari,
                     onValueChange = { horari = it },
-                    label = { Text("Horari") }
+                    label = { Text("Horari Inici") }
+                )
+                TextField(
+                    value = horariFins,
+                    onValueChange = { horariFins = it },
+                    label = { Text("Horari Fi") }
+                )
+                TextField(
+                    value = data,
+                    onValueChange = { data = it },
+                    label = { Text("Data") }
                 )
             }
         },
@@ -348,7 +420,9 @@ fun EditEventDialog(
                         codiPostal = codiPostal,
                         poblacio = poblacio,
                         aforament = aforament,
-                        hora_inici = horari
+                        hora_inici = horari,
+                        hora_fi = horariFins,
+                        data_esde = data
                     )
                     onSave(updatedEsdeveniment)
                 }

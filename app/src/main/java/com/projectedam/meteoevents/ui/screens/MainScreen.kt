@@ -30,7 +30,8 @@ fun MainScreen(
     onLogout: () -> Unit,
     onUserManagement: () -> Unit,
     onEventManagement: () -> Unit,
-    onMesuresManagement: ()-> Unit
+    onMesuresManagement: ()-> Unit,
+    onSeguretat: () -> Unit
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
     var showSnackbar by remember { mutableStateOf(false) }
@@ -94,6 +95,14 @@ fun MainScreen(
             Button(onClick =  onMesuresManagement) { Text("Veure Mesures de Prevenció") }
             Spacer(modifier = Modifier.height(8.dp))
             Button(onClick =  onUserManagement ) { Text("Veure Perfil") }
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+        Button(
+            onClick = onSeguretat,
+            colors = ButtonDefaults.buttonColors(Color(0xFF81C784))
+        ) {
+            Text("Seguretat", color = Color.White)
         }
     }
 

@@ -13,6 +13,7 @@ import com.projectedam.meteoevents.ui.screens.EsdevenimentsManagementScreen
 import com.projectedam.meteoevents.ui.screens.LoginScreen
 import com.projectedam.meteoevents.ui.screens.MainScreen
 import com.projectedam.meteoevents.ui.screens.MesuresSeguretatManagementScreen
+import com.projectedam.meteoevents.ui.screens.SeguretatScreen
 import com.projectedam.meteoevents.ui.screens.UserManagementScreen
 import com.projectedam.meteoevents.ui.screens.UserViewModel
 import com.projectedam.meteoevents.ui.theme.MeteoEventsTheme
@@ -89,6 +90,9 @@ class MainActivity : ComponentActivity() {
                     },
                     onMesuresManagement = {
                         navController.navigate("mesures_management")
+                    },
+                    onSeguretat = {
+                        navController.navigate("seguretatScreen")
                     }
                 )
             }
@@ -121,6 +125,12 @@ class MainActivity : ComponentActivity() {
              */
             composable("mesures_management") {
                 MesuresSeguretatManagementScreen(
+                    userViewModel = viewModel,
+                    onNavigateBack = { navController.popBackStack() }
+                )
+            }
+            composable("seguretatScreen") {
+                SeguretatScreen(
                     userViewModel = viewModel,
                     onNavigateBack = { navController.popBackStack() }
                 )
