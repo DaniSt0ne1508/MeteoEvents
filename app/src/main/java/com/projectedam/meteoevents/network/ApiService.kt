@@ -107,28 +107,24 @@ data class Mesura(
     val nivell_mesura: Int
 )
 
-data class MeteoResponse(
-    @SerializedName("Usuaris participants") val usuarisParticipants: List<String>,
-    @SerializedName("dataHora") val dataHora: MeteoDetails
-)
 
 data class MeteoDetails(
-    @SerializedName("VelocitatMitjaVent") val velocitatMitjaVent: Int,
-    @SerializedName("AlertaVentMitja") val alertaVentMitja: Int,
+    @SerializedName("VelocitatMitjaVent") val velocitatMitjaVent: Int?,
+    @SerializedName("AlertaVentMitja") val alertaVentMitja: Int?,
     @SerializedName("MesuresVent") val mesuresVent: MesuresVent?,
-    @SerializedName("RatxaMaximaVent") val ratxaMaximaVent: Int,
-    @SerializedName("AlertaRatxaMaxima") val alertaRatxaMaxima: Int,
-    @SerializedName("ProbabilitatPluja") val probabilitatPluja: Int,
-    @SerializedName("Precipitacio") val precipitacio: Double,
-    @SerializedName("AlertaPluja") val alertaPluja: Int,
-    @SerializedName("ProbabilitatTempesta") val probabilitatTempesta: Int,
-    @SerializedName("Neu") val neu: Double,
-    @SerializedName("AlertaNeu") val alertaNeu: Int,
-    @SerializedName("ProbabilitatNevada") val probabilitatNevada: Int,
-    @SerializedName("Temperatura") val temperatura: Double,
-    @SerializedName("AlertaAltaTemperatura") val alertaAltaTemperatura: Int,
-    @SerializedName("AlertaBaixaTemperatura") val alertaBaixaTemperatura: Int,
-    @SerializedName("HumitatRelativa") val humitatRelativa: Int
+    @SerializedName("RatxaMaximaVent") val ratxaMaximaVent: Int?,
+    @SerializedName("AlertaRatxaMaxima") val alertaRatxaMaxima: Int?,
+    @SerializedName("ProbabilitatPluja") val probabilitatPluja: Int?,
+    @SerializedName("Precipitacio") val precipitacio: Double?,
+    @SerializedName("AlertaPluja") val alertaPluja: Int?,
+    @SerializedName("ProbabilitatTempesta") val probabilitatTempesta: Int?,
+    @SerializedName("Neu") val neu: Double?,
+    @SerializedName("AlertaNeu") val alertaNeu: Int?,
+    @SerializedName("ProbabilitatNevada") val probabilitatNevada: Int?,
+    @SerializedName("Temperatura") val temperatura: Double?,
+    @SerializedName("AlertaAltaTemperatura") val alertaAltaTemperatura: Int?,
+    @SerializedName("AlertaBaixaTemperatura") val alertaBaixaTemperatura: Int?,
+    @SerializedName("HumitatRelativa") val humitatRelativa: Int?
 )
 
 data class MesuresVent(
@@ -360,6 +356,79 @@ interface ApiService {
     suspend fun getUsersByEvent(
         @Header("Authorization") authToken: String,
         @Path("esdevenimentId") esdevenimentId: Int
+    ): Response<ResponseBody>
+
+    /**
+     * Mètode per afegir un usuari a un esdeveniment.
+     *
+     * @param authToken Token d'autenticació encriptat.
+     * @param esdevenimentId ID de l'esdeveniment.
+     * @param usuariId ID de l'usuari.
+     * @return Resposta HTTP amb l'estat de la petició.
+     */
+    @POST("api/esdeveniments/{esdevenimentId}/usuaris/{usuariId}")
+    suspend fun addUserToEvent(
+        @Header("Authorization") authToken: String,
+        @Path("esdevenimentId") esdevenimentId: Int,
+        @Path("usuariId") usuariId: Int
+    ): Response<ResponseBody>
+
+    /**
+     * Mètode per eliminar un usuari d'un esdeveniment.
+     *
+     * @param authToken Token d'autenticació encriptat.
+     * @param esdevenimentId ID de l'esdeveniment.
+     * @param usuariId ID de l'usuari.
+     * @return Resposta HTTP amb l'estat de la petició.
+     */
+    @DELETE("api/esdeveniments/{esdevenimentId}/usuaris/{usuariId}")
+    suspend fun deleteUserFromEvent(
+        @Header("Authorization") authToken: String,
+        @Path("esdevenimentId") esdevenimentId: Int,
+        @Path("usuariId") usuariId: Int
+    ): Response<ResponseBody>
+
+    /**
+     * Mètode per obtenir les mesures d'un esdeveniment.
+     *
+     * @param authToken Token d'autenticació encriptat.
+     * @param esdevenimentId ID de l'esdeveniment.
+     * @return Resposta HTTP amb la llista de mesures encriptada.
+     */
+    @GET("api/esdeveniments/{esdevenimentId}/mesures")
+    suspend fun getMeasuresByEvent(
+        @Header("Authorization") authToken: String,
+        @Path("esdevenimentId") esdevenimentId: Int
+    ): Response<ResponseBody>
+
+    /**
+     * Mètode per afegir una mesura a un esdeveniment.
+     *
+     * @param authToken Token d'autenticació encriptat.
+     * @param esdevenimentId ID de l'esdeveniment.
+     * @param mesuraId ID de la mesura.
+     * @return Resposta HTTP amb l'estat de la petició.
+     */
+    @POST("api/esdeveniments/{esdevenimentId}/mesures/{mesuraId}")
+    suspend fun addMeasureToEvent(
+        @Header("Authorization") authToken: String,
+        @Path("esdevenimentId") esdevenimentId: Int,
+        @Path("mesuraId") mesuraId: Int
+    ): Response<ResponseBody>
+
+    /**
+     * Mètode per eliminar una mesura d'un esdeveniment.
+     *
+     * @param authToken Token d'autenticació encriptat.
+     * @param esdevenimentId ID de l'esdeveniment.
+     * @param mesuraId ID de la mesura.
+     * @return Resposta HTTP amb l'estat de la petició.
+     */
+    @DELETE("api/esdeveniments/{esdevenimentId}/mesures/{mesuraId}")
+    suspend fun deleteMeasureFromEvent(
+        @Header("Authorization") authToken: String,
+        @Path("esdevenimentId") esdevenimentId: Int,
+        @Path("mesuraId") mesuraId: Int
     ): Response<ResponseBody>
 
     /**

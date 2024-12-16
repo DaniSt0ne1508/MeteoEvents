@@ -13,7 +13,6 @@ import com.projectedam.meteoevents.network.Esdeveniment
 import com.projectedam.meteoevents.network.LoginResponse
 import com.projectedam.meteoevents.network.Mesura
 import com.projectedam.meteoevents.network.MeteoDetails
-import com.projectedam.meteoevents.network.MeteoResponse
 import com.projectedam.meteoevents.network.User
 import kotlinx.coroutines.launch
 import okhttp3.MediaType.Companion.toMediaType
@@ -101,7 +100,11 @@ class UserViewModel(private val apiService: ApiService) : ViewModel() {
 
                     onSuccess(loginResponse.token, loginResponse.funcionalId)
                 } else {
-                    onFailure("Error en l'inici de sessió. Codi de resposta: ${response.code()}")
+                    if (response.code() == 401) {
+                        onFailure("Usuari o contrasenya incorrectes")
+                    } else {
+                        onFailure("Error en l'inici de sessió. Codi de resposta: ${response.code()}")
+                    }
                 }
             } catch (e: IOException) {
                 Log.e("Login", "Error de connexió: ${e.localizedMessage}")
@@ -226,8 +229,20 @@ class UserViewModel(private val apiService: ApiService) : ViewModel() {
                         return@launch
                     }
 
+                    val userWithEncryptedPassword = try {
+                        if (!user.contrasenya.isNullOrEmpty()) {
+                            val encryptedPassword = CipherUtil.encrypt(user.contrasenya)
+                            user.copy(contrasenya = encryptedPassword)
+                        } else {
+                            user
+                        }
+                    } catch (e: Exception) {
+                        onFailure("Error en xifrar la contrasenya de l'usuari: ${e.message}")
+                        return@launch
+                    }
+
                     val requestBody = try {
-                        val userJson = Gson().toJson(user)
+                        val userJson = Gson().toJson(userWithEncryptedPassword)
                         val encryptedUserJson = CipherUtil.encrypt(userJson)
                         encryptedUserJson.toRequestBody("application/json; charset=utf-8".toMediaType())
                     } catch (e: Exception) {
@@ -312,11 +327,15 @@ class UserViewModel(private val apiService: ApiService) : ViewModel() {
             viewModelScope.launch {
                 try {
                     val encryptedToken = CipherUtil.encrypt(currentToken)
-                    val userJson = Gson().toJson(user)
+                    val userWithEncryptedPassword = if (!user.contrasenya.isNullOrEmpty()) {
+                        val encryptedPassword = CipherUtil.encrypt(user.contrasenya)
+                        user.copy(contrasenya = encryptedPassword)
+                    } else {
+                        user
+                    }
 
-                    Log.d("User JSON", userJson)
+                    val userJson = Gson().toJson(userWithEncryptedPassword)
                     val encryptedUserJson = CipherUtil.encrypt(userJson)
-
                     val requestBody =
                         encryptedUserJson.toRequestBody("application/json; charset=utf-8".toMediaType())
 
@@ -793,7 +812,7 @@ class UserViewModel(private val apiService: ApiService) : ViewModel() {
                     val encryptedToken = try {
                         CipherUtil.encrypt(currentToken)
                     } catch (e: Exception) {
-                        onFailure("Error en xifrar el token: ${e.message}")
+                        onFailure("Error al encriptar el token: ${e.message}")
                         return@launch
                     }
 
@@ -802,7 +821,7 @@ class UserViewModel(private val apiService: ApiService) : ViewModel() {
                         val encryptedMesura = CipherUtil.encrypt(mesuraJson)
                         encryptedMesura.toRequestBody("application/json; charset=utf-8".toMediaType())
                     } catch (e: Exception) {
-                        onFailure("Error en convertir o xifrar la mesura: ${e.message}")
+                        onFailure("Error al encriptar la mesura: ${e.message}")
                         return@launch
                     }
 
@@ -929,9 +948,18 @@ class UserViewModel(private val apiService: ApiService) : ViewModel() {
         }
     }
 
-    fun getMeteo(
+    /**
+     * Afegeix un usuari a un esdeveniment específic.
+     *
+     * @param eventId L'ID de l'esdeveniment al qual s'ha d'afegir l'usuari.
+     * @param userId L'ID de l'usuari que s'ha d'afegir a l'esdeveniment.
+     * @param onSuccess Callback que es crida quan l'operació s'ha completat amb èxit, passant el missatge de resposta del servidor.
+     * @param onFailure Callback que es crida quan hi ha un error, passant el missatge d'error corresponent.
+     */
+    fun addUserEvent(
         eventId: Int,
-        onSuccess: (List<String>, MeteoDetails) -> Unit,
+        userId: Int,
+        onSuccess: (String) -> Unit,
         onFailure: (String) -> Unit
     ) {
         val currentToken = token
@@ -945,42 +973,21 @@ class UserViewModel(private val apiService: ApiService) : ViewModel() {
                         return@launch
                     }
 
-                    val response = ApiClient.apiService.getMeteo("Bearer $encryptedToken", eventId)
+                    val response = ApiClient.apiService.addUserToEvent(
+                        authToken = "Bearer $encryptedToken",
+                        esdevenimentId = eventId,
+                        usuariId = userId
+                    )
 
                     if (response.isSuccessful && response.body() != null) {
-                        val encryptedResponse = response.body()!!.string()
-
-                        val decryptedResponse = try {
-                            CipherUtil.decrypt(encryptedResponse)
-                        } catch (e: Exception) {
-                            onFailure("Error al desxifrar la resposta: ${e.message}")
-                            return@launch
-                        }
-
-                        println("Resposta desencriptada: $decryptedResponse")
-
-                        try {
-                            if (decryptedResponse.contains("No s'ha pogut generar el JSON")) {
-                                onFailure("El servidor no pudo generar los datos meteorológicos.")
-                            } else {
-                                val meteoResponse =
-                                    Gson().fromJson(decryptedResponse, MeteoResponse::class.java)
-
-                                val usuariosList = meteoResponse.usuarisParticipants
-                                val meteoData = meteoResponse.dataHora
-
-                                onSuccess(usuariosList, meteoData)
-                            }
-                        } catch (e: Exception) {
-                            onFailure("Error al parsejar la resposta desxifrada: ${e.message}")
-                            println("Contenido de la respuesta que no se puede parsear: $decryptedResponse")
-                        }
+                        val responseBody = response.body()!!.string()
+                        onSuccess(responseBody)
                     } else {
                         when (response.code()) {
                             401 -> onFailure("Token invàlid o inactiu.")
-                            404 -> onFailure("Token no proporcionat.")
-                            500 -> onFailure("Error intern al servidor.")
-                            else -> onFailure("Error al obtenir les dades meteorològiques: ${response.code()}")
+                            404 -> onFailure("Esdeveniment o Usuari no trobats.")
+                            400 -> onFailure("Token no proporcionat.")
+                            else -> onFailure("Error inesperat. Codi de resposta: ${response.code()}.")
                         }
                     }
                 } catch (e: IOException) {
@@ -992,8 +999,337 @@ class UserViewModel(private val apiService: ApiService) : ViewModel() {
                 }
             }
         } else {
-            onFailure("Token no vàlid, no es pot obtenir la informació meteorològica.")
+            onFailure("Token no vàlid, no es pot afegir l'usuari a l'esdeveniment.")
         }
+    }
+
+    /**
+     * Elimina un usuari d'un esdeveniment.
+     *
+     * @param eventId ID de l'esdeveniment del qual es vol eliminar l'usuari.
+     * @param userId ID de l'usuari que es vol eliminar de l'esdeveniment.
+     * @param onSuccess Funció callback que s'executa quan l'operació és exitosa. Rep un missatge com a paràmetre.
+     * @param onFailure Funció callback que s'executa en cas d'error. Rep un missatge d'error com a paràmetre.
+     */
+    fun deleteUserEvent(
+        eventId: Int,
+        userId: Int,
+        onSuccess: (String) -> Unit,
+        onFailure: (String) -> Unit
+    ) {
+        val currentToken = token
+        if (currentToken != null) {
+            viewModelScope.launch {
+                try {
+                    val encryptedToken = try {
+                        CipherUtil.encrypt(currentToken)
+                    } catch (e: Exception) {
+                        onFailure("Error al encriptar el token: ${e.message}")
+                        return@launch
+                    }
+
+                    val response = ApiClient.apiService.deleteUserFromEvent(
+                        authToken = "Bearer $encryptedToken",
+                        esdevenimentId = eventId,
+                        usuariId = userId
+                    )
+
+                    if (response.isSuccessful && response.body() != null) {
+                        val responseBody = response.body()!!.string()
+                        onSuccess(responseBody)
+                    } else {
+                        when (response.code()) {
+                            401 -> onFailure("Token invàlid o inactiu.")
+                            404 -> onFailure("Esdeveniment o Usuari no trobats.")
+                            400 -> onFailure("Token no proporcionat.")
+                            else -> onFailure("Error inesperat. Codi de resposta: ${response.code()}.")
+                        }
+                    }
+                } catch (e: IOException) {
+                    onFailure("Error de connexió. Si us plau, comprova la teva connexió al servidor.")
+                } catch (e: HttpException) {
+                    onFailure("Error al servidor. Si us plau, intenta-ho més tard.")
+                } catch (e: Exception) {
+                    onFailure("Error inesperat: ${e.message}")
+                }
+            }
+        } else {
+            onFailure("Token no vàlid, no es pot eliminar l'usuari de l'esdeveniment.")
+        }
+    }
+
+    /**
+     * Mètode per obtenir la llista de mesures assignades a un esdeveniment.
+     *
+     * @param eventId ID de l'esdeveniment.
+     * @param onSuccess Funció que s'executa amb la llista de mesures obtinguda.
+     * @param onFailure Funció que s'executa en cas d'error durant l'obtenció.
+     */
+    fun getMesuresEvent(
+        eventId: Int,
+        onSuccess: (List<Mesura>) -> Unit,
+        onFailure: (String) -> Unit
+    ) {
+        val currentToken = token
+        if (currentToken != null) {
+            viewModelScope.launch {
+                try {
+                    val encryptedToken = try {
+                        CipherUtil.encrypt(currentToken)
+                    } catch (e: Exception) {
+                        onFailure("Error al encriptar el token: ${e.message}")
+                        return@launch
+                    }
+
+                    val response =
+                        ApiClient.apiService.getMeasuresByEvent("Bearer $encryptedToken", eventId)
+
+                    if (response.isSuccessful && response.body() != null) {
+                        val encryptedResponse = response.body()!!.string()
+
+                        val decryptedResponse = try {
+                            CipherUtil.decrypt(encryptedResponse)
+                        } catch (e: Exception) {
+                            onFailure("Error al desxifrar la resposta: ${e.message}")
+                            return@launch
+                        }
+
+                        val measuresList = try {
+                            Gson().fromJson(decryptedResponse, Array<Mesura>::class.java).toList()
+                        } catch (e: Exception) {
+                            onFailure("Error al parsejar la resposta desxifrada: ${e.message}")
+                            return@launch
+                        }
+
+                        onSuccess(measuresList)
+                    } else {
+                        onFailure("No s'han pogut obtenir les mesures. Codi de resposta: ${response.code()}")
+                    }
+                } catch (e: IOException) {
+                    onFailure("Error de connexió. Si us plau, comprova la teva connexió al servidor.")
+                } catch (e: HttpException) {
+                    onFailure("Error al servidor. Si us plau, intenta-ho més tard.")
+                } catch (e: Exception) {
+                    onFailure("Error inesperat: ${e.message}")
+                }
+            }
+        } else {
+            onFailure("Token no vàlid, no es pot obtenir les mesures.")
+        }
+    }
+
+    /**
+     * Afegeix una mesura a un esdeveniment específic.
+     *
+     * @param eventId L'ID de l'esdeveniment al qual s'ha d'afegir la mesura.
+     * @param measureId L'ID de la mesura que s'ha d'afegir a l'esdeveniment.
+     * @param onSuccess Callback que es crida quan l'operació s'ha completat amb èxit, passant el missatge de resposta del servidor.
+     * @param onFailure Callback que es crida quan hi ha un error, passant el missatge d'error corresponent.
+     */
+    fun addMesuraEvent(
+        eventId: Int,
+        measureId: Int,
+        onSuccess: (String) -> Unit,
+        onFailure: (String) -> Unit
+    ) {
+        val currentToken = token
+        if (currentToken != null) {
+            viewModelScope.launch {
+                try {
+                    val encryptedToken = try {
+                        CipherUtil.encrypt(currentToken)
+                    } catch (e: Exception) {
+                        onFailure("Error al encriptar el token: ${e.message}")
+                        return@launch
+                    }
+
+                    val response = ApiClient.apiService.addMeasureToEvent(
+                        authToken = "Bearer $encryptedToken",
+                        esdevenimentId = eventId,
+                        mesuraId = measureId
+                    )
+
+                    if (response.isSuccessful && response.body() != null) {
+                        val responseBody = response.body()!!.string()
+                        onSuccess(responseBody)
+                    } else {
+                        when (response.code()) {
+                            401 -> onFailure("Token invàlid o inactiu.")
+                            404 -> onFailure("Esdeveniment o Mesura no trobats.")
+                            400 -> onFailure("Token no proporcionat.")
+                            else -> onFailure("Error inesperat. Codi de resposta: ${response.code()}.")
+                        }
+                    }
+                } catch (e: IOException) {
+                    onFailure("Error de connexió. Si us plau, comprova la teva connexió al servidor.")
+                } catch (e: HttpException) {
+                    onFailure("Error al servidor. Si us plau, intenta-ho més tard.")
+                } catch (e: Exception) {
+                    onFailure("Error inesperat: ${e.message}")
+                }
+            }
+        } else {
+            onFailure("Token no vàlid, no es pot afegir la mesura a l'esdeveniment.")
+        }
+    }
+
+    /**
+     * Elimina una mesura d'un esdeveniment.
+     *
+     * @param eventId ID de l'esdeveniment del qual es vol eliminar la mesura.
+     * @param measureId ID de la mesura que es vol eliminar de l'esdeveniment.
+     * @param onSuccess Funció callback que s'executa quan l'operació és exitosa. Rep un missatge com a paràmetre.
+     * @param onFailure Funció callback que s'executa en cas d'error. Rep un missatge d'error com a paràmetre.
+     */
+    fun deleteMesuraEvent(
+        eventId: Int,
+        measureId: Int,
+        onSuccess: (String) -> Unit,
+        onFailure: (String) -> Unit
+    ) {
+        val currentToken = token
+        if (currentToken != null) {
+            viewModelScope.launch {
+                try {
+                    val encryptedToken = try {
+                        CipherUtil.encrypt(currentToken)
+                    } catch (e: Exception) {
+                        onFailure("Error al encriptar el token: ${e.message}")
+                        return@launch
+                    }
+
+                    val response = ApiClient.apiService.deleteMeasureFromEvent(
+                        authToken = "Bearer $encryptedToken",
+                        esdevenimentId = eventId,
+                        mesuraId = measureId
+                    )
+
+                    if (response.isSuccessful && response.body() != null) {
+                        val responseBody = response.body()!!.string()
+                        onSuccess(responseBody)
+                    } else {
+                        when (response.code()) {
+                            401 -> onFailure("Token invàlid o inactiu.")
+                            404 -> onFailure("Esdeveniment o Mesura no trobats.")
+                            400 -> onFailure("Token no proporcionat.")
+                            else -> onFailure("Error inesperat. Codi de resposta: ${response.code()}.")
+                        }
+                    }
+                } catch (e: IOException) {
+                    onFailure("Error de connexió. Si us plau, comprova la teva connexió al servidor.")
+                } catch (e: HttpException) {
+                    onFailure("Error al servidor. Si us plau, intenta-ho més tard.")
+                } catch (e: Exception) {
+                    onFailure("Error inesperat: ${e.message}")
+                }
+            }
+        } else {
+            onFailure("Token no vàlid, no es pot eliminar la mesura de l'esdeveniment.")
+        }
+    }
+
+    fun getMeteo(
+        eventId: Int,
+        onSuccess: (List<String>, MeteoDetails, List<String>) -> Unit,
+        onFailure: (String) -> Unit
+    ) {
+        val currentToken = token
+        if (currentToken != null) {
+            viewModelScope.launch {
+                try {
+                    val encryptedToken = try {
+                        CipherUtil.encrypt(currentToken)
+                    } catch (e: Exception) {
+                        onFailure("Error encriptant el token: ${e.message}")
+                        return@launch
+                    }
+
+                    val response = ApiClient.apiService.getMeteo("Bearer $encryptedToken", eventId)
+
+                    if (response.isSuccessful && response.body() != null) {
+                        val encryptedResponse = response.body()!!.string()
+
+                        val decryptedResponse = try {
+                            CipherUtil.decrypt(encryptedResponse)
+                        } catch (e: Exception) {
+                            onFailure("Error desxifrant la resposta: ${e.message}")
+                            return@launch
+                        }
+
+                        try {
+                            if (decryptedResponse.contains("No s'ha pogut generar el JSON")) {
+                                onFailure("El servidor no ha pogut generar les dades meteorològiques.")
+                                return@launch
+                            }
+
+                            val jsonResponse = Gson().fromJson(decryptedResponse, Map::class.java)
+
+                            // Lista de usuarios
+                            val usuariosList =
+                                (jsonResponse["Usuaris participants"] as? List<*>)?.map { it.toString() }
+                                    ?: emptyList()
+
+                            // Map con datos meteorológicos
+                            val meteoDataMap =
+                                jsonResponse.filterKeys { it != "Usuaris participants" }
+
+                            // Aquí guardaremos las acciones
+                            val accionesList = meteoDataMap.flatMap { (_, value) ->
+                                // Si es un submapa, extraer sus valores
+                                if (value is Map<*, *>) {
+                                    val actions = extractActionsFromSubmap(value)
+                                    println("Acciones encontradas: $actions") // Depuración
+                                    actions
+                                } else {
+                                    emptyList()
+                                }
+                            }
+
+                            // Obtener el primer MeteoDetails (asumiendo uno por evento)
+                            val meteoDetails = meteoDataMap.values
+                                .filterIsInstance<Map<*, *>>()
+                                .firstOrNull()?.let { subMap ->
+                                    Gson().fromJson(Gson().toJson(subMap), MeteoDetails::class.java)
+                                }
+
+                            if (meteoDetails != null) {
+                                onSuccess(usuariosList, meteoDetails, accionesList)
+                            } else {
+                                onFailure("No s'han trobat dades meteorològiques vàlides.")
+                            }
+                        } catch (e: Exception) {
+                            onFailure("Error analitzant la resposta desxifrada: ${e.message}")
+                            println("Contingut de la resposta que no es pot analitzar: $decryptedResponse")
+                        }
+                    } else {
+                        when (response.code()) {
+                            401 -> onFailure("Token invàlid o inactiu.")
+                            404 -> onFailure("Token no proporcionat.")
+                            500 -> onFailure("Error intern al servidor.")
+                            else -> onFailure("Error obtenint les dades meteorològiques: ${response.code()}")
+                        }
+                    }
+                } catch (e: IOException) {
+                    onFailure("Error de connexió. Si us plau, comprova la teva connexió amb el servidor.")
+                } catch (e: HttpException) {
+                    onFailure("Error al servidor. Si us plau, torna-ho a intentar més tard.")
+                } catch (e: Exception) {
+                    onFailure("Error inesperat: ${e.message}")
+                }
+            }
+        } else {
+            onFailure("Token no vàlid, no es poden obtenir les dades meteorològiques.")
+        }
+    }
+
+    private fun extractActionsFromSubmap(map: Map<*, *>): List<String> {
+        // Adaptat de la funció d'en Miquel
+        return map.entries
+            .filter { (_, value) -> value is Map<*, *> }
+            .map { (_, subMap) ->
+                val submapAsString = subMap.toString()
+                submapAsString
+            }
     }
 }
 

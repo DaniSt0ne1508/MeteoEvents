@@ -9,6 +9,7 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.*
@@ -18,6 +19,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.projectedam.meteoevents.network.Esdeveniment
+import com.projectedam.meteoevents.network.Mesura
 import com.projectedam.meteoevents.network.User
 
 /**
@@ -44,8 +46,15 @@ fun EsdevenimentsManagementScreen(
     val usersForEvent = remember { mutableStateOf<List<User>?>(null) }
     val isUsersDialogOpen = remember { mutableStateOf(false) }
     val userErrorMessage = remember { mutableStateOf<String?>(null) }
+    val eventIdUsers = remember { mutableStateOf<Int?>(null) }
+    val mesuresForEvent = remember { mutableStateOf<List<Mesura>?>(null) }
+    val isMesuresDialogOpen = remember { mutableStateOf(false) }
+    val mesuresErrorMessage = remember { mutableStateOf<String?>(null) }
+    val eventIdMesures = remember { mutableStateOf<Int?>(null) }
+
 
     val onViewUsers: (Int) -> Unit = { eventId ->
+        eventIdUsers.value = eventId
         userViewModel.getUsersEvents(
             eventId = eventId,
             onSuccess = { users ->
@@ -55,6 +64,21 @@ fun EsdevenimentsManagementScreen(
             onFailure = { error ->
                 userErrorMessage.value = error
                 isUsersDialogOpen.value = true
+            }
+        )
+    }
+
+    val onViewMesures: (Int) -> Unit = { eventId ->
+        eventIdMesures.value = eventId
+        userViewModel.getMesuresEvent(
+            eventId = eventId,
+            onSuccess = { mesures ->
+                mesuresForEvent.value = mesures
+                isMesuresDialogOpen.value = true
+            },
+            onFailure = { error ->
+                mesuresErrorMessage.value = error
+                isMesuresDialogOpen.value = true
             }
         )
     }
@@ -150,7 +174,8 @@ fun EsdevenimentsManagementScreen(
                             )
                         },
                         onViewClick = onViewEvent,
-                        onViewUsersClick = onViewUsers
+                        onViewUsersClick = onViewUsers,
+                        onViewMesuresClick = onViewMesures
                     )
                 }
             }
@@ -190,23 +215,230 @@ fun EsdevenimentsManagementScreen(
             onDismissRequest = { isUsersDialogOpen.value = false },
             title = { Text("Usuaris de l'Esdeveniment") },
             text = {
-                usersForEvent.value?.let { users ->
-                    LazyColumn {
-                        items(users) { user ->
-                            Column(modifier = Modifier.padding(vertical = 4.dp)) {
-                                Text(
-                                    text = "Nom: ${user.nomC}"
-                                )
-                                Text(
-                                    text = "Email: ${user.email}"
-                                )
+                Column {
+                    usersForEvent.value?.let { users ->
+                        LazyColumn {
+                            items(users) { user ->
+                                Column(modifier = Modifier.padding(vertical = 4.dp)) {
+                                    Text(text = "Nom: ${user.nomC}")
+                                    Text(text = "ID Usuari: ${user.id}")
+                                }
                             }
                         }
+                    } ?: Text(userErrorMessage.value ?: "No s'han pogut obtenir els usuaris.")
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    var newUserId by remember { mutableStateOf("") }
+                    OutlinedTextField(
+                        value = newUserId,
+                        onValueChange = { newUserId = it },
+                        label = { Text("ID de l'Usuari") },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    Button(
+                        onClick = {
+                            val userId = newUserId.toIntOrNull()
+                            if (userId != null && eventIdUsers.value != null) {
+                                userViewModel.addUserEvent(
+                                    eventId = eventIdUsers.value!!,
+                                    userId = userId,
+                                    onSuccess = { message ->
+                                        userErrorMessage.value = "Usuari afegit amb èxit: $message"
+                                        newUserId = ""
+
+                                        userViewModel.getUsersEvents(
+                                            eventId = eventIdUsers.value!!,
+                                            onSuccess = { users ->
+                                                usersForEvent.value = users
+                                            },
+                                            onFailure = { error ->
+                                                userErrorMessage.value = error
+                                            }
+                                        )
+                                    },
+                                    onFailure = { error ->
+                                        userErrorMessage.value = "Error en afegir l'usuari: $error"
+                                    }
+                                )
+                            } else {
+                                userErrorMessage.value = "L'ID de l'usuari no és vàlid"
+                            }
+                        },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text("Afegir Usuari")
                     }
-                } ?: Text(userErrorMessage.value ?: "No s'han pogut obtenir els usuaris.")
+
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    Button(
+                        onClick = {
+                            val userId = newUserId.toIntOrNull()
+                            if (userId != null && eventIdUsers.value != null) {
+                                userViewModel.deleteUserEvent(
+                                    eventId = eventIdUsers.value!!,
+                                    userId = userId,
+                                    onSuccess = { message ->
+                                        userErrorMessage.value = "Usuari eliminat amb èxit: $message"
+                                        newUserId = ""
+
+                                        userViewModel.getUsersEvents(
+                                            eventId = eventIdUsers.value!!,
+                                            onSuccess = { users ->
+                                                usersForEvent.value = users
+                                            },
+                                            onFailure = { error ->
+                                                userErrorMessage.value = error
+                                            }
+                                        )
+                                    },
+                                    onFailure = { error ->
+                                        userErrorMessage.value = "Error en eliminar l'usuari: $error"
+                                    }
+                                )
+                            } else {
+                                userErrorMessage.value = "L'ID de l'usuari no és vàlid"
+                            }
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error) // Rojo
+                    ) {
+                        Text("Eliminar Usuari")
+                    }
+
+                    userErrorMessage.value?.let { error ->
+                        Text(
+                            text = error,
+                            color = MaterialTheme.colorScheme.error,
+                            modifier = Modifier.padding(top = 8.dp)
+                        )
+                    }
+                }
             },
             confirmButton = {
                 Button(onClick = { isUsersDialogOpen.value = false }) {
+                    Text("Tancar")
+                }
+            }
+        )
+    }
+
+    if (isMesuresDialogOpen.value) {
+        AlertDialog(
+            onDismissRequest = { isMesuresDialogOpen.value = false },
+            title = { Text("Mesures de l'Esdeveniment") },
+            text = {
+                Column {
+                    mesuresForEvent.value?.let { mesures ->
+                        LazyColumn {
+                            items(mesures) { mesure ->
+                                Column(modifier = Modifier.padding(vertical = 4.dp)) {
+                                    Text(text = "ID: ${mesure.id}")
+                                    Text(text = "Condicio: ${mesure.condicio}")
+                                    Text(text = "Nivell: ${mesure.nivell_mesura}")
+                                }
+                            }
+                        }
+                    } ?: Text(mesuresErrorMessage.value ?: "No s'han pogut obtenir les mesures.")
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    var newMesuraId by remember { mutableStateOf("") }
+                    OutlinedTextField(
+                        value = newMesuraId,
+                        onValueChange = { newMesuraId = it },
+                        label = { Text("ID de la Mesura") },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    Button(
+                        onClick = {
+                            val mesureId = newMesuraId.toIntOrNull()
+                            if (mesureId != null && eventIdMesures.value != null) {
+                                userViewModel.addMesuraEvent(
+                                    eventId = eventIdMesures.value!!,
+                                    measureId = mesureId,
+                                    onSuccess = { message ->
+                                        mesuresErrorMessage.value = "Mesura afegida amb èxit: $message"
+                                        newMesuraId = ""
+
+                                        userViewModel.getMesuresEvent(
+                                            eventId = eventIdMesures.value!!,
+                                            onSuccess = { mesures ->
+                                                mesuresForEvent.value = mesures
+                                            },
+                                            onFailure = { error ->
+                                                mesuresErrorMessage.value = error
+                                            }
+                                        )
+                                    },
+                                    onFailure = { error ->
+                                        mesuresErrorMessage.value = "Error en afegir la mesura: $error"
+                                    }
+                                )
+                            } else {
+                                mesuresErrorMessage.value = "L'ID de la mesura no és vàlid"
+                            }
+                        },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text("Afegir Mesura")
+                    }
+
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    Button(
+                        onClick = {
+                            val mesureId = newMesuraId.toIntOrNull()
+                            if (mesureId != null && eventIdMesures.value != null) {
+                                userViewModel.deleteMesuraEvent(
+                                    eventId = eventIdMesures.value!!,
+                                    measureId = mesureId,
+                                    onSuccess = { message ->
+                                        mesuresErrorMessage.value = "Mesura eliminada amb èxit: $message"
+                                        newMesuraId = ""
+
+                                        userViewModel.getMesuresEvent(
+                                            eventId = eventIdMesures.value!!,
+                                            onSuccess = { mesures ->
+                                                mesuresForEvent.value = mesures
+                                            },
+                                            onFailure = { error ->
+                                                mesuresErrorMessage.value = error
+                                            }
+                                        )
+                                    },
+                                    onFailure = { error ->
+                                        mesuresErrorMessage.value = "Error en eliminar la mesura: $error"
+                                    }
+                                )
+                            } else {
+                                mesuresErrorMessage.value = "L'ID de la mesura no és vàlid"
+                            }
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
+                    ) {
+                        Text("Eliminar Mesura")
+                    }
+
+                    mesuresErrorMessage.value?.let { error ->
+                        Text(
+                            text = error,
+                            color = MaterialTheme.colorScheme.error,
+                            modifier = Modifier.padding(top = 8.dp)
+                        )
+                    }
+                }
+            },
+            confirmButton = {
+                Button(onClick = { isMesuresDialogOpen.value = false }) {
                     Text("Tancar")
                 }
             }
@@ -287,7 +519,8 @@ fun EsdevenimentItem(
     onDeleteClick: () -> Unit,
     isAdmin: Boolean,
     onViewClick: (Int) -> Unit,
-    onViewUsersClick: (Int) -> Unit
+    onViewUsersClick: (Int) -> Unit,
+    onViewMesuresClick: (Int) -> Unit
 ) {
     Card(modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
         Column(modifier = Modifier.padding(16.dp)) {
@@ -302,25 +535,45 @@ fun EsdevenimentItem(
             ) {
                 Text("Veure")
             }
-            Button(
-                onClick = { onViewUsersClick(esdeveniment.id!!) }, // Nuevo botón
-                colors = ButtonDefaults.buttonColors(MaterialTheme.colorScheme.secondary)
-            ) {
-                Text("Usuaris")
-            }
-            if(isAdmin) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Button(onClick = onEditClick) {
-                        Text("Edita")
-                    }
-                    Button(
-                        onClick = onDeleteClick,
-                        colors = ButtonDefaults.buttonColors(MaterialTheme.colorScheme.error)
+            if (isAdmin) {
+                Column(modifier = Modifier.fillMaxWidth()) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        Text("Elimina")
+                        Button(
+                            onClick = { onViewUsersClick(esdeveniment.id!!) },
+                            colors = ButtonDefaults.buttonColors(MaterialTheme.colorScheme.secondary),
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Text("Usuaris")
+                        }
+                        Button(
+                            onClick = { onViewMesuresClick(esdeveniment.id!!) },
+                            colors = ButtonDefaults.buttonColors(MaterialTheme.colorScheme.secondary),
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Text("Mesures")
+                        }
+                    }
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Button(
+                            onClick = onEditClick,
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Text("Edita")
+                        }
+                        Button(
+                            onClick = onDeleteClick,
+                            colors = ButtonDefaults.buttonColors(MaterialTheme.colorScheme.error),
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Text("Elimina")
+                        }
                     }
                 }
             }

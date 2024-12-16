@@ -6,19 +6,16 @@ import com.google.gson.Gson
 import junit.framework.TestCase.assertEquals
 import junit.framework.TestCase.assertTrue
 import kotlinx.coroutines.runBlocking
+import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
+import okhttp3.RequestBody.Companion.toRequestBody
 import org.junit.Before
 import org.junit.Test
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import java.util.concurrent.TimeUnit
+import java.util.Base64
 
-
-//Fet seguint el video https://www.youtube.com/watch?app=desktop&v=F5cRcqeVlRU&ab_channel=CheezyCode
-
-/**
- * Classe de proves d'integració per a l'ApiService.
- */
 class IntegrationTest {
     private lateinit var apiService: ApiService
     var authToken: String? = null
@@ -45,15 +42,54 @@ class IntegrationTest {
         val password = "admin24"
 
         runBlocking {
-            val loginResponse = apiService.login(username, password)
+            val timestamp = java.time.Instant.now().toString()
+            val passwordWithTimestamp = "$password|$timestamp"
+
+            val encryptedPassword = try {
+                CipherUtil.encrypt(passwordWithTimestamp)
+            } catch (e: Exception) {
+                println("Error al xifrar la contrasenya: ${e.message}")
+                return@runBlocking
+            }
+
+            val base64Password = Base64.getEncoder().encodeToString(
+                encryptedPassword.toByteArray(Charsets.UTF_8)
+            )
+
+            val encryptedUsername = try {
+                CipherUtil.encrypt(username)
+            } catch (e: Exception) {
+                println("Error al xifrar el nom d'usuari: ${e.message}")
+                return@runBlocking
+            }
+
+            val base64Username = Base64.getEncoder().encodeToString(
+                encryptedUsername.toByteArray(Charsets.UTF_8)
+            )
+
+            val loginResponse = apiService.login(base64Username, base64Password)
 
             if (loginResponse.isSuccessful && loginResponse.body() != null) {
-                val loginBody = loginResponse.body()
-                authToken = "Bearer ${loginBody?.token}"
-                if (authToken != null) {
-                    println("Token obtingut correctament.")
-                } else {
-                    println("Error al obtenir el token.")
+                val encryptedResponse = loginResponse.body()!!.string()
+
+                val decryptedResponse = try {
+                    CipherUtil.decrypt(encryptedResponse)
+                } catch (e: Exception) {
+                    println("Error al desxifrar la resposta del servidor: ${e.message}")
+                    return@runBlocking
+                }
+
+                try {
+                    val loginBody = Gson().fromJson(decryptedResponse, LoginResponse::class.java)
+                    authToken = loginBody.token
+
+                    if (authToken != null) {
+                        println("Token obtingut correctament.")
+                    } else {
+                        println("Error al obtenir el token.")
+                    }
+                } catch (e: Exception) {
+                    println("Error al parsejar la resposta desxifrada: ${e.message}")
                 }
             } else {
                 println("Login FAILED: Codi de resposta ${loginResponse.code()}")
@@ -62,17 +98,25 @@ class IntegrationTest {
     }
 
     /**
-     * Verifica que el login i el logout funcionen correctament.
+     * Verifica que el login i el logout funcionin correctament.
      */
     @Test
     fun testLoginAndLogout() = runBlocking {
         if (authToken == null) {
-            println("Login FAILED: No s'ha obtingut el token abans de la prova.")
+            println("Login FAILED: No s'ha obtingut el token.")
             assertTrue(false)
             return@runBlocking
         }
 
-        val logoutResponse = apiService.logout(authToken!!)
+        val encryptedToken = try {
+            CipherUtil.encrypt(authToken!!)
+        } catch (e: Exception) {
+            println("Error al xifrar el token: ${e.message}")
+            assertTrue(false)
+            return@runBlocking
+        }
+
+        val logoutResponse = apiService.logout("Bearer $encryptedToken")
 
         if (logoutResponse.isSuccessful) {
             println("Logout OK: Codi de resposta ${logoutResponse.code()}")
@@ -90,7 +134,35 @@ class IntegrationTest {
     fun testLoginError() = runBlocking {
         val username = "wrongUser"
         val password = "wrongPassword"
-        val response = apiService.login(username, password)
+
+        val timestamp = java.time.Instant.now().toString()
+        val passwordWithTimestamp = "$password|$timestamp"
+
+        val encryptedPassword = try {
+            CipherUtil.encrypt(passwordWithTimestamp)
+        } catch (e: Exception) {
+            println("Error al xifrar la contrasenya: ${e.message}")
+            assertTrue(false)
+            return@runBlocking
+        }
+
+        val base64Password = Base64.getEncoder().encodeToString(
+            encryptedPassword.toByteArray(Charsets.UTF_8)
+        )
+
+        val encryptedUsername = try {
+            CipherUtil.encrypt(username)
+        } catch (e: Exception) {
+            println("Error al xifrar el nom d'usuari: ${e.message}")
+            assertTrue(false)
+            return@runBlocking
+        }
+
+        val base64Username = Base64.getEncoder().encodeToString(
+            encryptedUsername.toByteArray(Charsets.UTF_8)
+        )
+
+        val response = apiService.login(base64Username, base64Password)
 
         if (response.code() == 401) {
             println("TestLoginError OK")
@@ -114,7 +186,15 @@ class IntegrationTest {
             return@runBlocking
         }
 
-        val response = apiService.getUsers(authToken!!)
+        val encryptedToken = try {
+            CipherUtil.encrypt(authToken!!)
+        } catch (e: Exception) {
+            println("Error al xifrar el token: ${e.message}")
+            assertTrue(false)
+            return@runBlocking
+        }
+
+        val response = apiService.getUsers("Bearer $encryptedToken")
 
         if (response.code() == 200) {
             println("TestGetUsers OK")
@@ -136,7 +216,15 @@ class IntegrationTest {
             return@runBlocking
         }
 
-        val response = apiService.getEsdeveniments(authToken!!)
+        val encryptedToken = try {
+            CipherUtil.encrypt(authToken!!)
+        } catch (e: Exception) {
+            println("Error al xifrar el token: ${e.message}")
+            assertTrue(false)
+            return@runBlocking
+        }
+
+        val response = apiService.getEsdeveniments("Bearer $encryptedToken")
 
         if (response.code() == 200) {
             println("TestGetEsdeveniments OK")
@@ -158,7 +246,15 @@ class IntegrationTest {
             return@runBlocking
         }
 
-        val response = apiService.getMesures(authToken!!)
+        val encryptedToken = try {
+            CipherUtil.encrypt(authToken!!)
+        } catch (e: Exception) {
+            println("Error al xifrar el token: ${e.message}")
+            assertTrue(false)
+            return@runBlocking
+        }
+
+        val response = apiService.getMesures("Bearer $encryptedToken")
 
         if (response.code() == 200) {
             println("TestGetMesures OK")
@@ -175,7 +271,14 @@ class IntegrationTest {
     @Test
     fun testCreateUser() = runBlocking {
         if (authToken == null) {
-            println("TestCreateUser FAILED: No s'ha obtingut el token")
+            assertTrue(false)
+            return@runBlocking
+        }
+
+        val encryptedToken = try {
+            CipherUtil.encrypt(authToken!!)
+        } catch (e: Exception) {
+            println("Error al xifrar el token: ${e.message}")
             assertTrue(false)
             return@runBlocking
         }
@@ -184,25 +287,43 @@ class IntegrationTest {
             id = "",
             nomC = "Nou Nom",
             nomUsuari = "nouUsuari",
-            contrasenya = "NouPassword123",
+            contrasenya = "NouPassword123", // Contraseña que se encriptará
             dataNaixement = "2000-01-01",
             sexe = "M",
             poblacio = "Barcelona",
             email = "nouemail@example.com",
             telefon = "123456789",
             descripcio = "Usuari de prova",
-            funcionalId = "USR",
-            username = "nouUsuari",
-            password = "NouPassword123"
+            funcionalId = "USR"
         )
 
-        val response = apiService.createUser(authToken!!, user)
+        val userWithEncryptedPassword = if (!user.contrasenya.isNullOrEmpty()) {
+            val encryptedPassword = try {
+                CipherUtil.encrypt(user.contrasenya)
+            } catch (e: Exception) {
+                println("Error al xifrar la contrasenya: ${e.message}")
+                return@runBlocking
+            }
+            user.copy(contrasenya = encryptedPassword) // Sustituimos la contraseña original por la encriptada
+        } else {
+            user
+        }
+
+        val userJson = Gson().toJson(userWithEncryptedPassword)
+        val encryptedUserJson = try {
+            CipherUtil.encrypt(userJson)
+        } catch (e: Exception) {
+            println("Error al xifrar l'usuari: ${e.message}")
+            return@runBlocking
+        }
+
+        val requestBody = encryptedUserJson.toRequestBody("application/json; charset=utf-8".toMediaType())
+
+        val response = apiService.createUser("Bearer $encryptedToken", requestBody)
 
         if (response.code() == 201) {
-            println("TestCreateUser OK")
             assertTrue(response.isSuccessful)
         } else {
-            println("Error en crear l'usuari: Codi de resposta ${response.code()}")
             assertTrue(false)
         }
     }
@@ -213,7 +334,6 @@ class IntegrationTest {
     @Test
     fun testCreateEsdeveniment() = runBlocking {
         if (authToken == null) {
-            println("TestCreateEsdeveniment FAILED: No s'ha obtingut el token")
             assertTrue(false)
             return@runBlocking
         }
@@ -226,16 +346,19 @@ class IntegrationTest {
             codiPostal = "08001",
             poblacio = "Barcelona",
             aforament = "100",
-            horari = "14:00-18:00"
+            hora_inici = "14:00",
+            hora_fi = "18:00",
+            data_esde = "2024-12-31"
         )
 
-        val response = apiService.createEsdeveniment(authToken!!, esdeveniment)
+        val jsonEsdeveniment = Gson().toJson(esdeveniment)
+        val requestBody = jsonEsdeveniment.toRequestBody("application/json; charset=utf-8".toMediaType())
+
+        val response = apiService.createEsdeveniment(authToken!!, requestBody)
 
         if (response.code() == 201) {
-            println("TestCreateEsdeveniment OK")
             assertTrue(response.isSuccessful)
         } else {
-            println("Error en crear l'esdeveniment: Codi de resposta ${response.code()}")
             assertTrue(false)
         }
     }
@@ -255,10 +378,14 @@ class IntegrationTest {
             condicio = "Temperatura",
             valor = 40.0,
             valorUm = "graus",
-            accio = "Activar aire acondicionat!!!"
+            accio = "Activar aire acondicionat!!!",
+            nivell_mesura = 1
         )
 
-        val response = apiService.createMesura(authToken!!, mesura)
+        val jsonMesura = Gson().toJson(mesura)
+        val requestBody = jsonMesura.toRequestBody("application/json; charset=utf-8".toMediaType())
+
+        val response = apiService.createMesura(authToken!!, requestBody)
 
         if (response.code() == 201) {
             println("TestCreateMesura OK")
