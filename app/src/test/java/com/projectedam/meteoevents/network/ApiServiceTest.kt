@@ -288,7 +288,7 @@ class IntegrationTest {
             id = "",
             nomC = "Nou Nom",
             nomUsuari = "nouUsuari",
-            contrasenya = "NouPassword123", // Contraseña que se encriptará
+            contrasenya = "NouPassword123",
             dataNaixement = "2000-01-01",
             sexe = "M",
             poblacio = "Barcelona",
@@ -305,7 +305,7 @@ class IntegrationTest {
                 println("Error al xifrar la contrasenya: ${e.message}")
                 return@runBlocking
             }
-            user.copy(contrasenya = encryptedPassword) // Sustituimos la contraseña original por la encriptada
+            user.copy(contrasenya = encryptedPassword)
         } else {
             user
         }
@@ -823,6 +823,184 @@ class IntegrationTest {
             assertTrue(false)
         }
     }
+
+    /**
+     * Verifica l'afegiment d'una mesura a un esdeveniment específic.
+     */
+    @Test
+    fun testAddMesuraEvent() = runBlocking {
+        val eventId = 3
+        val mesuraId = 1
+
+        if (authToken == null) {
+            println("TestAddMesuraEvent FAILED: No s'ha obtingut el token")
+            assertTrue(false)
+            return@runBlocking
+        }
+
+        val encryptedToken = try {
+            CipherUtil.encrypt(authToken!!)
+        } catch (e: Exception) {
+            println("Error en xifrar el token: ${e.message}")
+            assertTrue(false)
+            return@runBlocking
+        }
+
+        val response = apiService.addMeasureToEvent(
+            authToken = "Bearer $encryptedToken",
+            esdevenimentId = eventId,
+            mesuraId = mesuraId
+        )
+
+        if (response.isSuccessful && response.body() != null) {
+            val responseBody = response.body()!!.string()
+            println("TestAddMesuraEvent OK: Mesura afegida amb èxit.")
+            assertTrue(true)
+        } else {
+            when (response.code()) {
+                401 -> println("TestAddMesuraEvent FAILED: Token invàlid o inactiu.")
+                404 -> println("TestAddMesuraEvent FAILED: Esdeveniment o Mesura no trobats.")
+                400 -> println("TestAddMesuraEvent FAILED: Token no proporcionat.")
+                else -> println("TestAddMesuraEvent FAILED: Error inesperat. Codi de resposta ${response.code()}.")
+            }
+            assertTrue(false)
+        }
+    }
+
+    /**
+     * Verifica l'eliminació d'una mesura d'un esdeveniment.
+     */
+    @Test
+    fun testDeleteMesuraFromEvent() = runBlocking {
+        val esdevenimentId = 3
+        val mesuraId = 1
+
+        if (authToken == null) {
+            println("TestDeleteMesuraFromEvent FAILED: No s'ha obtingut el token")
+            assertTrue(false)
+            return@runBlocking
+        }
+
+        val encryptedToken = try {
+            CipherUtil.encrypt(authToken!!)
+        } catch (e: Exception) {
+            println("Error en xifrar el token: ${e.message}")
+            assertTrue(false)
+            return@runBlocking
+        }
+
+        val response = apiService.deleteMeasureFromEvent(
+            authToken = "Bearer $encryptedToken",
+            esdevenimentId = esdevenimentId,
+            mesuraId = mesuraId
+        )
+
+        if (response.isSuccessful && response.body() != null) {
+            val responseBody = response.body()!!.string()
+            println("TestDeleteMesuraFromEvent OK: $responseBody")
+            assertTrue(true)
+        } else {
+            when (response.code()) {
+                401 -> println("TestDeleteMesuraFromEvent FAILED: Token invàlid o inactiu.")
+                404 -> println("TestDeleteMesuraFromEvent FAILED: Esdeveniment o Mesura no trobats.")
+                400 -> println("TestDeleteMesuraFromEvent FAILED: Token no proporcionat.")
+                else -> println("TestDeleteMesuraFromEvent FAILED: Error inesperat. Codi de resposta: ${response.code()}")
+            }
+            assertTrue(false)
+        }
+    }
+
+
+    /**
+     * Funció auxiliar per extreure el submap.
+     */
+    private fun extractActionsFromSubmap(map: Map<*, *>): List<String> {
+        return map.entries
+            .filter { (_, value) -> value is String }
+            .map { (_, value) -> value.toString() }
+    }
+
+    /**
+     * Verificaca l'extracció de les dades meteorològiques.
+     */
+    @Test
+    fun testGetMeteo() = runBlocking {
+        val eventId = 1
+
+        if (authToken == null) {
+            println("TestGetMeteo FAILED: No s'ha obtingut el token")
+            assertTrue("No s'ha obtingut el token", false)
+            return@runBlocking
+        }
+
+        val encryptedToken = try {
+            CipherUtil.encrypt(authToken!!)
+        } catch (e: Exception) {
+            println("Error en xifrar el token: ${e.message}")
+            assertTrue("Error en xifrar el token: ${e.message}", false)
+            return@runBlocking
+        }
+
+        val response = apiService.getMeteo("Bearer $encryptedToken", eventId)
+
+        if (response.isSuccessful && response.body() != null) {
+            val encryptedResponse = response.body()!!.string()
+
+            val decryptedResponse = try {
+                CipherUtil.decrypt(encryptedResponse)
+            } catch (e: Exception) {
+                println("Error al desxifrar la resposta: ${e.message}")
+                assertTrue("Error al desxifrar la resposta: ${e.message}", false)
+                return@runBlocking
+            }
+
+            if (decryptedResponse.contains("No s'ha pogut generar el JSON")) {
+                println("Error: El servidor no ha pogut generar les dades meteorològiques.")
+                assertTrue("El servidor no ha pogut generar les dades meteorològiques.", false)
+                return@runBlocking
+            }
+
+            try {
+                val jsonResponse = Gson().fromJson(decryptedResponse, Map::class.java)
+
+                val usuariosList =
+                    (jsonResponse["Usuaris participants"] as? List<*>)?.map { it.toString() }
+                        ?: emptyList()
+
+                val meteoDataMap = jsonResponse.filterKeys { it != "Usuaris participants" }
+
+                val accionsList = meteoDataMap.flatMap { (_, value) ->
+                    if (value is Map<*, *>) {
+                        val actions = extractActionsFromSubmap(value)
+                        println("Accions: $actions")
+                        actions
+                    } else {
+                        emptyList()
+                    }
+                }
+
+                val meteoDetails = meteoDataMap.values
+                    .filterIsInstance<Map<*, *>>()
+                    .firstOrNull()?.let { subMap ->
+                        Gson().fromJson(Gson().toJson(subMap), MeteoDetails::class.java)
+                    }
+
+                assertTrue("Llista d'usuaris no hauria de ser buida", usuariosList.isNotEmpty())
+                assertTrue("Les dades meteorològiques no han de ser nulls", meteoDetails != null)
+                println("TestGetMeteo OK: Usuaris = $usuariosList, Dades meteorològiques = $meteoDetails")
+            } catch (e: Exception) {
+                println("Error al parsejar la resposta descifrada: ${e.message}")
+                assertTrue("Error al parsejar la resposta descifrada: ${e.message}", false)
+            }
+        } else {
+            println("TestGetMeteo FAILED: No s'han pogut obtenir les dades. Codi de resposta ${response.code()}")
+            assertTrue(
+                "No s'han pogut obtenir les dades. Codi de resposta ${response.code()}",
+                false
+            )
+        }
+    }
 }
+
 
 
