@@ -1094,14 +1094,14 @@ class UserViewModel(private val apiService: ApiService) : ViewModel() {
                             return@launch
                         }
 
-                        val measuresList = try {
+                        val mesuresList = try {
                             Gson().fromJson(decryptedResponse, Array<Mesura>::class.java).toList()
                         } catch (e: Exception) {
                             onFailure("Error al parsejar la resposta desxifrada: ${e.message}")
                             return@launch
                         }
 
-                        onSuccess(measuresList)
+                        onSuccess(mesuresList)
                     } else {
                         onFailure("No s'han pogut obtenir les mesures. Codi de resposta: ${response.code()}")
                     }
@@ -1264,28 +1264,23 @@ class UserViewModel(private val apiService: ApiService) : ViewModel() {
 
                             val jsonResponse = Gson().fromJson(decryptedResponse, Map::class.java)
 
-                            // Lista de usuarios
                             val usuariosList =
                                 (jsonResponse["Usuaris participants"] as? List<*>)?.map { it.toString() }
                                     ?: emptyList()
 
-                            // Map con datos meteorológicos
                             val meteoDataMap =
                                 jsonResponse.filterKeys { it != "Usuaris participants" }
 
-                            // Aquí guardaremos las acciones
                             val accionesList = meteoDataMap.flatMap { (_, value) ->
-                                // Si es un submapa, extraer sus valores
                                 if (value is Map<*, *>) {
                                     val actions = extractActionsFromSubmap(value)
-                                    println("Acciones encontradas: $actions") // Depuración
+                                    println("Acciones encontradas: $actions")
                                     actions
                                 } else {
                                     emptyList()
                                 }
                             }
 
-                            // Obtener el primer MeteoDetails (asumiendo uno por evento)
                             val meteoDetails = meteoDataMap.values
                                 .filterIsInstance<Map<*, *>>()
                                 .firstOrNull()?.let { subMap ->
